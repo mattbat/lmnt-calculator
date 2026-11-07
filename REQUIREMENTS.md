@@ -1,21 +1,21 @@
-# LMNT-ish — Requirements
+# LMNT Calculator — Requirements
 
 **Status:** Draft v0.1 · 2026-11-07
 **Owner:** Matt
 **Primary user:** Matt, at the kitchen counter with a gram scale, mixing a new batch of electrolyte powder on his phone
-**Secondary users:** friends Matt shares the app or a recipe with, and anyone who finds it at mattbat.com/lmnt-ish/
+**Secondary users:** friends Matt shares the app or a recipe with, and anyone who finds it at mattbat.com/lmnt-calculator/
 
 ---
 
 ## 1. Purpose
 
-LMNT-ish is a phone app (PWA) for mixing a homemade electrolyte drink powder. It's based on the recipe LMNT published at [science.drinklmnt.com](https://science.drinklmnt.com/electrolytes/best-homemade-electrolyte-drink-for-dehydration), plus Matt's own shelf-stable flavored versions made with fruit powders.
+LMNT Calculator is a phone app (PWA) for mixing a homemade electrolyte drink powder. It's based on the recipe LMNT published at [science.drinklmnt.com](https://science.drinklmnt.com/electrolytes/best-homemade-electrolyte-drink-for-dehydration), plus Matt's own shelf-stable flavored versions made with fruit powders.
 
 You pick a recipe and a batch size, and the app tells you exactly how many grams of each ingredient to weigh. It then walks you through weighing them one at a time and tells you how much powder goes in each vial. It also shows what each serving costs, how much sodium, potassium and magnesium it contains, and how much you save compared with buying LMNT. Every batch is logged with notes, so next time you know what you made and how it turned out.
 
 It replaces Matt's spreadsheet (`lmnt.xlsx`). Success means Matt never opens the spreadsheet again, never does math while holding a spatula, and can text a friend a recipe that opens ready to use.
 
-**Not commercial.** LMNT-ish is a personal project, like a blog post about using LMNT's published recipe. It isn't sold, has no ads, and is not made by or affiliated with LMNT (see §10).
+**Not commercial.** LMNT Calculator is a personal project, like a blog post about using LMNT's published recipe. It isn't sold, has no ads, and is not made by or affiliated with LMNT (see §10).
 
 ## 2. Goals and non-goals
 
@@ -49,8 +49,8 @@ These follow next5 so the two apps share code, tooling and deployment.
 | ID | Requirement |
 |----|-------------|
 | T1 | Delivered as a PWA that can be installed to the home screen (iPhone Safari → Share → Add to Home Screen; Android Chrome → Install) and runs standalone. |
-| T2 | Hosted on **GitHub Pages** from a public repo named **`lmnt-ish`**, which serves it at **https://mattbat.com/lmnt-ish/** through the existing `mattbat.github.io` custom domain. The landing page in `mattbat.github.io` gets a link to it. |
-| T3 | Every config uses the subpath `/lmnt-ish/`: Vite `base`, manifest `start_url` and `scope`, service-worker scope, and `navigateFallback`. Routing uses hash URLs, because Pages can't fall back to `index.html`. |
+| T2 | Hosted on **GitHub Pages** from a public repo named **`lmnt-calculator`**, which serves it at **https://mattbat.com/lmnt-calculator/** through the existing `mattbat.github.io` custom domain. The landing page in `mattbat.github.io` gets a link to it. |
+| T3 | Every config uses the subpath `/lmnt-calculator/`: Vite `base`, manifest `start_url` and `scope`, service-worker scope, and `navigateFallback`. Routing uses hash URLs, because Pages can't fall back to `index.html`. |
 | T4 | Works completely offline after the first load. The service worker caches all app files. |
 | T5 | All data lives on the device in IndexedDB (Dexie). The app requests persistent storage. |
 | T6 | Schema changes use versioned Dexie migrations. An app update never erases data. |
@@ -160,7 +160,7 @@ The spreadsheet uses 11.5 g potassium chloride per 30 servings (0.3833 g each). 
 6. **Log** (§8) and **Log entry**.
 7. **Receive recipe:** the screen a share link opens (§11).
 8. **Settings:** units, scale precision, servings per vial, retail comparison price, theme, backup and restore, version, and check for updates.
-9. **About:** what LMNT-ish is, a credit and link to LMNT's recipe article, the not-affiliated statement, the full disclaimer (§10), a **Buy the real thing** link to drinklmnt.com, and **Equipment** (a placeholder in v1).
+9. **About:** what LMNT Calculator is, a credit and link to LMNT's recipe article, the not-affiliated statement, the full disclaimer (§10), a **Buy the real thing** link to drinklmnt.com, and **Equipment** (a placeholder in v1).
 10. **Help:** short topics on making a batch, mixing mode, sharing, backups, measuring by teaspoon, and storage tips.
 
 Navigation: a bottom tab bar with **Recipes · Log · Ingredients · More** (Settings, About, Help).
@@ -169,20 +169,20 @@ Navigation: a bottom tab bar with **Recipes · Log · Ingredients · More** (Set
 
 | ID | Requirement |
 |----|-------------|
-| D1 | **First launch:** a one-screen notice that must be acknowledged once: "LMNT-ish is a personal project, not medical advice. Each serving has about 1,000 mg of sodium. Check with a doctor first if you have kidney disease, high blood pressure, or heart failure, are pregnant, or take medication that affects potassium (for example ACE inhibitors, ARBs, or potassium-sparing diuretics)." |
+| D1 | **First launch:** a one-screen notice that must be acknowledged once: "LMNT Calculator is a personal project, not medical advice. Each serving has about 1,000 mg of sodium. Check with a doctor first if you have kidney disease, high blood pressure, or heart failure, are pregnant, or take medication that affects potassium (for example ACE inhibitors, ARBs, or potassium-sparing diuretics)." |
 | D2 | **Every calculator screen** shows a short footer: *"Not medical advice · Not affiliated with LMNT."* It links to About. |
 | D3 | **About** has the full text: not medical advice; not made by or affiliated with LMNT; LMNT is a trademark of its owner; the base ratios come from the recipe LMNT published (linked); store powders away from children, since concentrated potassium chloride is harmful in large amounts; the user is responsible for their ingredients and measurements. |
-| D4 | **Branding:** LMNT-ish has its own icon, colors and type, and doesn't copy LMNT's logo, fonts or packaging. |
+| D4 | **Branding:** LMNT Calculator has its own icon, colors and type, and doesn't copy LMNT's logo, fonts or packaging. |
 | D5 | A shared recipe opens with the D2 footer and a link to the D1 notice for people who haven't seen it. |
 
 ## 11. Sharing
 
 | ID | Requirement |
 |----|-------------|
-| SH1 | **Share recipe** creates a link like `https://mattbat.com/lmnt-ish/#r=<data>`. The recipe (name, color, notes, ingredient lines with grams per serving, and each ingredient's name, electrolyte fractions and grams per tsp) is turned into compact JSON, compressed, and base64url-encoded after the `#`, so it never reaches the server. Prices are left out. |
+| SH1 | **Share recipe** creates a link like `https://mattbat.com/lmnt-calculator/#r=<data>`. The recipe (name, color, notes, ingredient lines with grams per serving, and each ingredient's name, electrolyte fractions and grams per tsp) is turned into compact JSON, compressed, and base64url-encoded after the `#`, so it never reaches the server. Prices are left out. |
 | SH2 | The link is sent with the share sheet (Messages, WhatsApp, email), or copied to the clipboard where sharing isn't available. Target length: under 1,500 characters for a typical recipe. |
 | SH3 | **Receive:** opening the link shows a preview (ingredients, grams per serving, electrolytes) and **Add to my recipes**. Each ingredient is matched to an existing one by name (ignoring case). Unmatched ingredients are created without a price. If a recipe with the same name exists, the user chooses **Replace** or **Keep both** ("Lemon (2)"). |
-| SH4 | Someone without the app can use a shared recipe right away in the browser. As in next5, **Copy for the LMNT-ish app** lets an iPhone user move it into the installed app, which keeps its own storage. |
+| SH4 | Someone without the app can use a shared recipe right away in the browser. As in next5, **Copy for the LMNT Calculator app** lets an iPhone user move it into the installed app, which keeps its own storage. |
 | SH5 | Each link includes a format version so future versions can still read old links. Invalid or damaged links show a friendly error, never a crash. |
 
 ## 12. Units
@@ -208,7 +208,7 @@ Navigation: a bottom tab bar with **Recipes · Log · Ingredients · More** (Set
 
 ## 14. Design and UX
 
-- **Look:** bright, clean and kitchen-friendly, in light and dark themes. Each recipe has a color (Raw: slate, Lemon: yellow, Watermelon: pink-red) used on its card, calculator header and mixing-mode screens. Numbers are big and easy to read from arm's length. The look is LMNT-ish's own (D4).
+- **Look:** bright, clean and kitchen-friendly, in light and dark themes. Each recipe has a color (Raw: slate, Lemon: yellow, Watermelon: pink-red) used on its card, calculator header and mixing-mode screens. Numbers are big and easy to read from arm's length. The look is LMNT Calculator's own (D4).
 - Mixing mode is designed for one hand, possibly with powder on your fingers: tap targets of at least 56 pt, the main button within thumb reach, and no swipe gestures needed.
 - Grams use tabular figures so columns line up.
 - Respects safe areas and uses `viewport-fit=cover`. No accidental zoom or pull-to-refresh in mixing mode.
@@ -250,7 +250,7 @@ Navigation: a bottom tab bar with **Recipes · Log · Ingredients · More** (Set
 
 | Date | Decision |
 |------|----------|
-| 2026-11-07 | The name is **LMNT-ish**, at mattbat.com/lmnt-ish/. It's non-commercial and credits LMNT, with a not-affiliated statement (§10). |
+| 2026-11-07 | The name is **LMNT Calculator**, at mattbat.com/lmnt-calculator/ (renamed from LMNT-ish the same day). It's non-commercial and credits LMNT, with a not-affiliated statement (§10). |
 | 2026-11-07 | The stack, hosting and CI copy next5 (React + TS + Vite + vite-plugin-pwa + Dexie, GitHub Pages, GitHub Actions). |
 | 2026-11-07 | Recipes are stored as grams per serving, and every ingredient scales together. |
 | 2026-11-07 | v1 includes the batch log with notes, share links, unit conversion, the disclaimer, offline support and backup. |
