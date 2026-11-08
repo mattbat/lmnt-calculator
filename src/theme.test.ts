@@ -21,7 +21,7 @@ function mockSystem(light: boolean) {
 
 beforeEach(() => {
   localStorage.clear();
-  document.head.innerHTML = '<meta name="theme-color" content="#0e1a1d" />';
+  document.head.innerHTML = '<meta name="theme-color" content="#12121f" />';
   delete document.documentElement.dataset.theme;
 });
 
@@ -42,10 +42,10 @@ describe('theme (§11)', () => {
     setThemePreference('light');
     expect(themePreference()).toBe('light');
     expect(document.documentElement.dataset.theme).toBe('light');
-    expect(meta()).toBe('#f3faf9');
+    expect(meta()).toBe('#f5f5fb');
     setThemePreference('dark');
     expect(document.documentElement.dataset.theme).toBe('dark');
-    expect(meta()).toBe('#0e1a1d');
+    expect(meta()).toBe('#12121f');
   });
 
   it('matches the phone when set to auto', () => {

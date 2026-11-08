@@ -123,7 +123,7 @@ Recipes (cards with name, cost per serving and electrolytes only), Calculator (S
 | Look and themes | ✅ | Light and dark via CSS variables; recipe color on cards, headers and mixing screens (text color picked for contrast). 📱 Check contrast and Dynamic Type on a phone. |
 | Tap targets | ✅ | 44 px or more everywhere; 56 px or more in mixing mode. |
 | Safe areas, no zoom | ✅ | `viewport-fit=cover`, safe-area padding. |
-| Splash screen, final icon | 🟡 | Final icon done (indigo drop and bolt). No designed splash screen yet; the app tint is still teal. |
+| Splash screen, final icon | 🟡 | Final icon done (indigo drop and bolt). App colors switched from teal to indigo to match (light accent `#4f46e5`, dark accent `#818cf8`; all text pairs WCAG AA or better). No designed splash screen yet. |
 | H-1 | ✅ | User README (read-only built-in recipes, sharing a link, Not now). |
 | H-2 | ✅ | Developer README (stack, layout, setup, CI/CD, share link, backup format 2, formulas). |
 | H-3 | ✅ | Empty states for the log and the built-in lists. |
