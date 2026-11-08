@@ -15,6 +15,10 @@
   --out: #b42318;
   --out-bg: #fde8e6;
   --out-text: #8a1a11;
+  --danger-ink: #ffffff;
+  --warn-bg: #fff1c9;
+  --warn-text: #6b4300;
+  --warn-line: #d9a21b;
   --radius: 16px;
   --radius-sm: 10px;
   --tap: 48px;
@@ -42,6 +46,10 @@
   --out: #ff8a80;
   --out-bg: #3b1d1b;
   --out-text: #ffb4ac;
+  --danger-ink: #3b0d09;
+  --warn-bg: #3b2f10;
+  --warn-text: #ffd98a;
+  --warn-line: #8a6a1a;
 }
 
 * {
