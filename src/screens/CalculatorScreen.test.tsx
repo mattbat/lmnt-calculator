@@ -100,8 +100,10 @@ describe('Calculator screen', () => {
     expect(card).toHaveTextContent('158.85 g');
     expect(card).toHaveTextContent('30 × 5.30 g');
     expect(card).toHaveTextContent('$7.41');
-    expect(card).toHaveTextContent('$0.25 / serving');
-    expect(card).toHaveTextContent('save $1.25 a serving ($37.59 a batch) vs $1.50 retail');
+    expect(card).toHaveTextContent('$0.25/serving');
+    expect(card).toHaveTextContent('saves $37.59 a batch');
+    await userEvent.setup().click(screen.getByRole('button', { name: 'About comparison price' }));
+    expect(card).toHaveTextContent('$1.25 a serving less than $1.50 per stick at retail');
     expect(card).toHaveTextContent('Na 950 mg · 41%');
     expect(card).toHaveTextContent('K 202 mg · 4%');
     expect(card).toHaveTextContent('Mg 60 mg');
@@ -114,7 +116,7 @@ describe('Calculator screen', () => {
     const start = screen.getByRole('button', { name: 'Start mixing' });
     const share = screen.getByRole('button', { name: 'Share recipe' });
     const weigh = screen.getByRole('heading', { name: 'Weigh out' });
-    const batch = screen.getByRole('heading', { name: 'Batch size' });
+    const batch = screen.getByRole('region', { name: 'Batch size' });
     const summary = screen.getByRole('region', { name: 'Summary' });
     const before = (x: Node, y: Node) => Boolean(x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING);
     expect(before(batch, start)).toBe(true);

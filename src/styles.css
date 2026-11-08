@@ -63,9 +63,20 @@ body {
   color: var(--text);
 }
 
+/* The page itself never scrolls or zooms: the app is a fixed-height frame and
+   only .screen scrolls. Pinch zoom is off (touch-action here, plus a
+   gesturestart guard in main.tsx for iOS, which ignores user-scalable=no). */
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+  touch-action: pan-x pan-y;
+}
+
 body {
   line-height: 1.4;
-  overscroll-behavior-y: none;
+  overscroll-behavior: none;
 }
 
 button {
@@ -82,15 +93,40 @@ h1 {
 
 /* Shell */
 
+/* Shell: a full-height column. The tab bar is the last row, not position:
+   fixed; on iPhone Home Screen apps a fixed bottom bar can float above the
+   bottom edge at launch until the page is scrolled. */
 .app {
-  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* Installed app: no browser toolbars, so the large viewport is the whole
+   screen, and it doesn't shrink at launch the way the dynamic one can. */
+@media (display-mode: standalone) {
+  .app {
+    height: 100lvh;
+  }
 }
 
 .screen {
-  max-width: 560px;
-  margin: 0 auto;
-  padding: calc(var(--safe-top) + 16px) calc(var(--safe-right) + 16px)
-    calc(var(--tabbar-h) + var(--safe-bottom) + 24px) calc(var(--safe-left) + 16px);
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  /* Content stays in a centered 528px column; the scrollbar stays at the edge. */
+  padding: calc(var(--safe-top) + 12px) max(calc(var(--safe-right) + 16px), calc((100% - 528px) / 2)) 20px
+    max(calc(var(--safe-left) + 16px), calc((100% - 528px) / 2));
+}
+
+/* A screen with no tab bar under it clears the home indicator itself. */
+.screen:last-child {
+  padding-bottom: calc(var(--safe-bottom) + 20px);
 }
 
 .soon {
@@ -99,10 +135,7 @@ h1 {
 }
 
 .tabbar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  flex: none;
   z-index: 20;
   display: flex;
   height: calc(var(--tabbar-h) + var(--safe-bottom));

@@ -73,7 +73,7 @@ export function Info({ children, label }: { children: ReactNode; label: string }
       >
         ⓘ
       </button>
-      {open && <p className="info-text">{children}</p>}
+      {open && <span className="info-text">{children}</span>}
     </>
   );
 }
@@ -180,6 +180,8 @@ export function NumField({
   big = false,
   min,
   disabled,
+  hideLabel = false,
+  inline = false,
 }: {
   label: string;
   value: number | undefined;
@@ -190,6 +192,10 @@ export function NumField({
   big?: boolean;
   min?: number;
   disabled?: boolean;
+  /** Keep the label for screen readers only, where the context already says what the box is. */
+  hideLabel?: boolean;
+  /** Label on the left, a short box on the right (settings rows). */
+  inline?: boolean;
 }) {
   const id = useId();
   const [text, setText] = useState(value === undefined ? '' : plain(value, 6));
@@ -204,8 +210,8 @@ export function NumField({
   }
   const bad = text.trim() !== '' && (parseNum(text) === undefined || (min !== undefined && (parseNum(text) ?? 0) < min));
   return (
-    <div className="field">
-      <label className="field-label" htmlFor={id}>
+    <div className={inline ? 'field inline' : 'field'}>
+      <label className={hideLabel ? 'sr-only' : 'field-label'} htmlFor={id}>
         {label}
       </label>
       <span className={big ? 'input-wrap big' : 'input-wrap'}>

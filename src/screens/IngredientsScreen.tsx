@@ -11,13 +11,13 @@ export function IngredientsScreen() {
   return (
     <main className="screen">
       <h1>Ingredients</h1>
-      <p className="muted">Prices are built in and drive every cost and savings number. They change when the app updates.</p>
+      <p className="muted small">Built-in prices. Every cost and savings number comes from these.</p>
       {!ingredients || !settings ? (
         <Loading />
       ) : ingredients.length === 0 ? (
         <Empty title="No ingredients">There are no ingredients in this version of the app.</Empty>
       ) : (
-        <ul className="cards">
+        <ul className="cards tight">
           {ingredients.map((i) => (
             <li key={i.id}>
               <div className="card ingredient-card">
