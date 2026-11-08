@@ -80,7 +80,6 @@ export function AboutScreen() {
         <p className="muted">Coming soon: the scale, vials and tools I use.</p>
       </Section>
 
-      <p className="legal">Version {__APP_VERSION__}</p>
     </main>
   );
 }
