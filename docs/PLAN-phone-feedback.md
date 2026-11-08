@@ -1,5 +1,7 @@
 # Plan: changes from Matt's phone test (2026-11-07)
 
+**Status: done (2026-11-07).** Agent A (data, calc, types) and Agent B (screens, tests, docs) are both finished and `npm run check` passes.
+
 Matt tried v1 on his phone. The big change in direction: **LMNT Calculator is a read-only app with built-in recipes**, not a tool for people to make their own. The other changes trim features and tighten the calculator screen.
 
 ## Matt's list → what changes
