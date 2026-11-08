@@ -8,6 +8,12 @@ test('make a 30-serving Watermelon batch, log it with notes, and make it again (
   await page.getByRole('link', { name: /Watermelon/ }).click();
   await expect(page.getByRole('heading', { name: 'Watermelon', level: 1 })).toBeVisible();
 
+  // Start mixing is reachable without scrolling (the viewport is the phone's).
+  const viewport = page.viewportSize()!;
+  const box = (await page.getByRole('button', { name: 'Start mixing' }).boundingBox())!;
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+
   const servings = page.getByLabel('Number of servings');
   await servings.fill('12');
   await expect(page.getByTestId('amount-salt')).toHaveText('30.00 g');
@@ -15,6 +21,10 @@ test('make a 30-serving Watermelon batch, log it with notes, and make it again (
   await expect(page.getByTestId('amount-salt')).toHaveText('75.00 g');
   await expect(page.getByTestId('amount-stevia')).toHaveText('3.60 g');
   await expect(page.getByText('Not medical advice · Not affiliated with LMNT.')).toBeVisible();
+
+  const summary = page.getByRole('region', { name: 'Summary' });
+  await expect(summary).toContainText('158.85 g');
+  await expect(summary).toContainText('Na 950 mg · 41%');
 
   await page.getByRole('button', { name: 'Start mixing' }).click();
   await expect(page.getByRole('heading', { name: 'Redmond Real Salt' })).toBeVisible();
@@ -51,35 +61,34 @@ test('make a 30-serving Watermelon batch, log it with notes, and make it again (
   await expect(page.getByLabel('Number of servings')).toHaveValue('30');
 });
 
-test('share a recipe link and add it in a fresh browser (Q-4)', async ({ page, browser }) => {
+test('share a recipe link and open it in a fresh browser (Q-4)', async ({ page, browser }) => {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __shared: unknown[] };
+    w.__shared = [];
+    Object.defineProperty(navigator, 'share', {
+      value: async (data: unknown) => {
+        w.__shared.push(data);
+      },
+      configurable: true,
+    });
+  });
   await openAndAccept(page);
-  // Make a recipe the other side doesn't have: duplicate Raw and rename it.
-  await page.goto('./#/recipe/raw/edit');
-  await page.getByRole('button', { name: 'Duplicate' }).click();
-  await expect(page.getByLabel('Name')).toHaveValue('Raw (2)');
-  await page.getByLabel('Name').fill('Beach Mix');
-  await page.getByRole('button', { name: 'Save recipe' }).click();
-  await expect(page.getByRole('heading', { name: 'Beach Mix', level: 1 })).toBeVisible();
-
+  await page.getByRole('link', { name: /Watermelon/ }).click();
   await page.getByRole('button', { name: 'Share recipe' }).click();
-  const box = page.getByLabel('Recipe link');
-  await expect(box).toHaveValue(/#r=/);
-  const link = await box.inputValue();
-  expect(link).toContain('/lmnt-calculator/#r=');
-  expect(link.length).toBeLessThan(1500);
+  await expect(page.getByText('Shared.')).toBeVisible();
+  const shared = await page.evaluate(() => (window as unknown as { __shared: { url: string }[] }).__shared);
+  const link = shared[0]!.url;
+  expect(link).toMatch(/\/lmnt-calculator\/#\/recipe\/watermelon$/);
 
   const other = await browser.newContext({ viewport: page.viewportSize() ?? undefined });
   try {
     const page2 = await other.newPage();
     await page2.goto(link);
+    await expect(page2.getByRole('heading', { name: 'Before you start' })).toBeVisible();
     await page2.getByRole('button', { name: 'I understand' }).click();
-    await expect(page2.getByRole('heading', { name: 'Beach Mix', level: 1 })).toBeVisible();
-    await expect(page2.getByText('Redmond Real Salt')).toBeVisible();
+    await expect(page2.getByRole('heading', { name: 'Watermelon', level: 1 })).toBeVisible();
+    await expect(page2.getByTestId('amount-salt')).toHaveText('75.00 g');
     await expect(page2.getByText('Not medical advice · Not affiliated with LMNT.')).toBeVisible();
-    await page2.getByRole('button', { name: 'Add to my recipes' }).click();
-    await expect(page2.getByRole('heading', { name: 'Recipe added' })).toBeVisible();
-    await page2.getByRole('link', { name: 'Go to my recipes' }).click();
-    await expect(page2.getByRole('link', { name: /Beach Mix/ })).toBeVisible();
   } finally {
     await other.close();
   }
@@ -89,12 +98,11 @@ test('back up, clear site data, and restore (Q-4)', async ({ page }, testInfo) =
   await disableWebShare(page);
   await openAndAccept(page);
 
-  // Change something so the restore is visible.
-  await page.goto('./#/ingredients');
-  await page.getByRole('button', { name: 'Edit Redmond Real Salt' }).click();
-  await page.getByLabel('Package price').fill('20');
-  await page.getByRole('button', { name: 'Save ingredient' }).click();
-  await expect(page.getByRole('button', { name: 'Edit Redmond Real Salt' })).toContainText('$20.00');
+  // Change a setting so the restore is visible.
+  await page.goto('./#/more/settings');
+  await page.getByRole('radio', { name: 'Ounces' }).click();
+  await page.goto('./#/recipe/watermelon');
+  await expect(page.getByTestId('amount-salt')).toHaveText('2.646 oz');
 
   await page.goto('./#/more/settings');
   const [download] = await Promise.all([
@@ -118,33 +126,48 @@ test('back up, clear site data, and restore (Q-4)', async ({ page }, testInfo) =
   await page.goto('./');
   await page.reload();
   await page.getByRole('button', { name: 'I understand' }).click();
-  await page.goto('./#/ingredients');
-  await expect(page.getByRole('button', { name: 'Edit Redmond Real Salt' })).toContainText('$11.39');
+  await page.goto('./#/recipe/watermelon');
+  await expect(page.getByTestId('amount-salt')).toHaveText('75.00 g');
 
   await page.goto('./#/more/settings');
   await page.getByLabel('Choose backup file').setInputFiles(file);
   const sheet = page.getByRole('dialog', { name: 'Restore from backup' });
-  await expect(sheet).toContainText('3 recipes');
   await sheet.getByRole('button', { name: 'Replace all' }).click();
   await page.getByRole('dialog', { name: 'Replace everything?' }).getByRole('button', { name: 'Replace all' }).click();
   await expect(page.getByText(/Everything was replaced/)).toBeVisible();
 
-  await page.goto('./#/ingredients');
-  await expect(page.getByRole('button', { name: 'Edit Redmond Real Salt' })).toContainText('$20.00');
+  await page.goto('./#/recipe/watermelon');
+  await expect(page.getByTestId('amount-salt')).toHaveText('2.646 oz');
 });
 
-test('editing an ingredient price updates the cost per serving (Q-4)', async ({ page }) => {
+test('ingredients shows the built-in prices read-only (Q-4)', async ({ page }) => {
   await openAndAccept(page);
-  const card = page.getByRole('link', { name: /Watermelon/ });
-  await expect(card).toContainText('$0.25');
-
   await tabs(page).getByRole('link', { name: /Ingredients/ }).click();
-  await page.getByRole('button', { name: 'Edit Redmond Real Salt' }).click();
-  await page.getByLabel('Package price').fill('20');
-  await page.getByRole('button', { name: 'Save ingredient' }).click();
+  await expect(page.getByRole('heading', { name: 'Ingredients', level: 1 })).toBeVisible();
+  const salt = page.getByRole('listitem').filter({ hasText: 'Redmond Real Salt' });
+  await expect(salt).toContainText('$11.39');
+  await expect(salt).toContainText('/g');
+  await expect(page.getByRole('button', { name: /Edit|Delete|Add/ })).toHaveCount(0);
+});
 
+test('an old pasted-recipe link just opens the recipes list (Q-4)', async ({ page }) => {
+  await openAndAccept(page);
+  await page.goto('./#r=abc');
+  await expect(page.getByRole('heading', { name: 'Recipes', level: 1 })).toBeVisible();
+});
+
+test('the backup reminder can be put off with Not now (Q-4)', async ({ page }) => {
+  await openAndAccept(page);
+  // Log a batch by hand so the reminder shows up.
+  await tabs(page).getByRole('link', { name: /Log/ }).click();
+  await page.getByRole('button', { name: '+ Log a batch by hand' }).click();
+  await page.getByRole('dialog', { name: 'Log a batch' }).getByRole('button', { name: 'Save to log' }).click();
+  await expect(page.getByLabel('Notes')).toBeVisible();
   await tabs(page).getByRole('link', { name: /Recipes/ }).click();
-  await expect(card).toContainText('$0.28');
-  await card.click();
-  await expect(page.getByText('Cost per serving').locator('..')).toContainText('$0.28');
+  await expect(page.getByText('Time for a backup')).toBeVisible();
+  await page.getByRole('button', { name: 'Not now' }).click();
+  await expect(page.getByText('Time for a backup')).toBeHidden();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Recipes', level: 1 })).toBeVisible();
+  await expect(page.getByText('Time for a backup')).toBeHidden();
 });

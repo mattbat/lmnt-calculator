@@ -13,8 +13,6 @@ export interface MixSession {
   order: string[];
   /** 0..order.length-1 are ingredients; then Mix; then Fill. */
   step: number;
-  /** Actual weights in grams, by ingredient id (M3). */
-  actuals: Record<string, number>;
   startedAt: number;
 }
 

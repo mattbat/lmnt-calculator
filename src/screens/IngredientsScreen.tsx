@@ -1,5 +1,5 @@
 import { formatWeight, pricePerGram } from '../calc';
-import { Chip, Empty, Loading } from '../components/ui';
+import { Empty, Loading } from '../components/ui';
 import { useIngredients, useSettings } from '../data/repo';
 import { money } from '../format';
 
@@ -11,7 +11,7 @@ export function IngredientsScreen() {
   return (
     <main className="screen">
       <h1>Ingredients</h1>
-      <p className="muted">Prices here drive every cost and savings number.</p>
+      <p className="muted">Prices are built in and drive every cost and savings number. They change when the app updates.</p>
       {!ingredients || !settings ? (
         <Loading />
       ) : ingredients.length === 0 ? (
@@ -29,7 +29,11 @@ export function IngredientsScreen() {
                   {formatWeight(i.packageGrams, settings.weightUnit, settings.scalePrecision === 1 ? 1 : 0.1)} package ·{' '}
                   {money(i.packagePrice)} · <span className="num">${pricePerGram(i).toFixed(4)}</span>/g
                 </span>
-                {i.packagePrice === 0 && <Chip>Price not set</Chip>}
+                {i.buyUrl && (
+                  <a className="link" href={i.buyUrl} target="_blank" rel="noopener noreferrer">
+                    Buy link
+                  </a>
+                )}
               </div>
             </li>
           ))}

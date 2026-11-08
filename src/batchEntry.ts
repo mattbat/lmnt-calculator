@@ -5,14 +5,13 @@ import type { Recipe, Settings } from './types';
 /**
  * Turns a calculated batch into a log entry (L1), with a snapshot of the
  * recipe so later edits never change the history. `order` lists ingredient
- * ids in the order they were weighed; `actuals` are grams by ingredient id.
+ * ids in the order they were weighed.
  */
 export function buildBatchInput(args: {
   recipe: Pick<Recipe, 'id' | 'name' | 'color' | 'lines'>;
   result: BatchResult;
   settings: Pick<Settings, 'servingsPerVial'>;
   order?: string[];
-  actuals?: Record<string, number>;
   notes?: string;
   madeAt?: number;
 }): BatchInput {
@@ -29,13 +28,11 @@ export function buildBatchInput(args: {
     fillGramsPerVial: result.fillGramsPerVial,
     lines: ids.map((id) => {
       const line = byId.get(id)!;
-      const actual = args.actuals?.[id];
       return {
         ingredientId: id,
         name: line.name,
         gramsPerServing: line.gramsPerServing,
         targetGrams: line.batchGrams,
-        ...(actual !== undefined ? { actualGrams: actual } : {}),
       };
     }),
     totalCost: result.costPerBatch,

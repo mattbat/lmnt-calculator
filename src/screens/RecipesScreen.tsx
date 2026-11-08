@@ -1,11 +1,11 @@
 import { useMemo, type CSSProperties } from 'react';
-import { calculateBatch, gramsPerServing } from '../calc';
+import { calculateBatch } from '../calc';
 import { BackupReminder } from '../components/BackupReminder';
 import { InstallHint } from '../components/InstallHint';
 import { Empty, Footer, Loading } from '../components/ui';
 import { readableInk } from '../color';
 import { useIngredients, useRecipes, useSettings } from '../data/repo';
-import { mg, money, perServing } from '../format';
+import { mg, money } from '../format';
 import { paths } from '../router';
 
 /** Home (§9 screen 1): a card per recipe. */
@@ -42,7 +42,6 @@ export function RecipesScreen() {
               >
                 <span className="card-band">
                   <span className="card-name">{recipe.name}</span>
-                  <span className="card-sub">{perServing(gramsPerServing(recipe), settings.weightUnit)} per serving</span>
                 </span>
                 <span className="card-body">
                   <span className="big-num">{money(result.costPerServing)}</span>

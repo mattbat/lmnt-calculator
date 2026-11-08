@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import {
   calculateBatch,
   formatWeight,
-  gramsPerServing,
   gramsToOunces,
   ouncesToGrams,
   roundToPrecision,
@@ -87,7 +86,7 @@ function CalculatorBody({
     <main className="screen">
       <TopBar title={recipe.name} back={paths.recipes()} backLabel="Back to recipes" color={recipe.color} />
       <p className="muted">
-        {perServing(gramsPerServing(recipe), unit)} per serving · mix one into 16–32 oz (about 0.5–1 L) of water
+        Mix one serving into 16–32 oz (about 0.5–1 L) of water
       </p>
 
       <Section title="Batch size">
@@ -122,6 +121,27 @@ function CalculatorBody({
           )}
         </p>
       </Section>
+
+      <div className="actions start-actions">
+        <button type="button" className="btn big" onClick={() => void startMixing(!resumable)} disabled={result.lines.length === 0 || result.servings <= 0}>
+          {resumable ? 'Resume mixing' : 'Start mixing'}
+        </button>
+        <div className="actions row">
+          {resumable && (
+            <button type="button" className="btn ghost small" onClick={() => void startMixing(true)}>
+              Start over
+            </button>
+          )}
+          <button type="button" className="btn ghost small" onClick={() => void share()}>
+            Share recipe
+          </button>
+        </div>
+        {shareMessage && (
+          <p className="hint" role="status">
+            {shareMessage}
+          </p>
+        )}
+      </div>
 
       <Section
         title="Weigh out"
@@ -166,33 +186,41 @@ function CalculatorBody({
         )}
       </Section>
 
-      <Section title="Totals">
-        <dl className="stats">
+      <section className="summary-card" aria-label="Summary">
+        <h2>Summary</h2>
+        <dl className="triple">
           <div>
-            <dt>Batch weight</dt>
             <dd className="num">{fmt(result.totalGrams)}</dd>
+            <dt>batch</dt>
           </div>
           <div>
-            <dt>Fill per vial</dt>
-            <dd className="num">{fmt(result.fillGramsPerVial)}</dd>
+            <dd className="num">
+              {plan.totalVials} × {fmt(result.fillGramsPerVial)}
+            </dd>
+            <dt>{plan.totalVials === 1 ? 'vial' : 'vials'}</dt>
           </div>
           <div>
-            <dt>Cost per batch</dt>
             <dd className="num">{money(result.costPerBatch)}</dd>
-          </div>
-          <div>
-            <dt>Cost per serving</dt>
-            <dd className="num">{money(result.costPerServing)}</dd>
-          </div>
-          <div>
-            <dt>Saved per serving</dt>
-            <dd className="num">{money(result.savingsPerServing)}</dd>
-          </div>
-          <div>
-            <dt>Saved per batch</dt>
-            <dd className="num">{money(result.savingsPerBatch)}</dd>
+            <dt>batch</dt>
           </div>
         </dl>
+        <p className="summary-row">
+          <strong className="num">{money(result.costPerServing)}</strong> / serving · save{' '}
+          <strong className="num">{money(result.savingsPerServing)}</strong> a serving (
+          <span className="num">{money(result.savingsPerBatch)}</span> a batch) vs{' '}
+          {money(settings.retailPricePerServing)} retail
+          <Info label="comparison price">Change the retail price per stick in Settings.</Info>
+        </p>
+        <p className="chips">
+          <Chip tone="info">
+            Na {mg(result.minerals.sodium)} · {Math.round(result.dailyValue.sodium)}%
+          </Chip>
+          <Chip tone="info">
+            K {mg(result.minerals.potassium)} · {Math.round(result.dailyValue.potassium)}%
+          </Chip>
+          <Chip tone="info">Mg {mg(result.minerals.magnesium)}</Chip>
+        </p>
+        <p className="hint">Per serving: sodium and potassium show the percent of the daily value.</p>
         {plan.partialServings > 0 && (
           <p className="hint">
             {plan.totalVials - 1} full {plan.totalVials - 1 === 1 ? 'vial' : 'vials'}, plus a last vial with{' '}
@@ -200,51 +228,8 @@ function CalculatorBody({
             {fmt(plan.partialGrams)}).
           </p>
         )}
-        <p className="hint">
-          Savings compare with ${settings.retailPricePerServing.toFixed(2)} per stick.
-          <Info label="comparison price">Change the retail price per stick in Settings.</Info>
-        </p>
-      </Section>
+      </section>
 
-      <Section title="Electrolytes per serving">
-        <dl className="stats">
-          <div>
-            <dt>Sodium</dt>
-            <dd className="num">{mg(result.minerals.sodium)}</dd>
-            <dd className="hint">{Math.round(result.dailyValue.sodium)}% daily value</dd>
-          </div>
-          <div>
-            <dt>Potassium</dt>
-            <dd className="num">{mg(result.minerals.potassium)}</dd>
-            <dd className="hint">{Math.round(result.dailyValue.potassium)}% daily value</dd>
-          </div>
-          <div>
-            <dt>Magnesium</dt>
-            <dd className="num">{mg(result.minerals.magnesium)}</dd>
-          </div>
-        </dl>
-      </Section>
-
-      <div className="actions">
-        <button type="button" className="btn big" onClick={() => void startMixing(!resumable)} disabled={result.lines.length === 0 || result.servings <= 0}>
-          {resumable ? 'Resume mixing' : 'Start mixing'}
-        </button>
-        {resumable && (
-          <button type="button" className="btn ghost" onClick={() => void startMixing(true)}>
-            Start over
-          </button>
-        )}
-        <div className="actions row">
-          <button type="button" className="btn ghost" onClick={() => void share()}>
-            Share recipe
-          </button>
-        </div>
-        {shareMessage && (
-          <p className="hint" role="status">
-            {shareMessage}
-          </p>
-        )}
-      </div>
       <Footer />
     </main>
   );

@@ -46,7 +46,8 @@ describe('Recipes screen', () => {
     const card = (await screen.findByText('Watermelon')).closest('a')!;
     expect(card).toHaveAttribute('href', '#/recipe/watermelon');
     expect(card).toHaveTextContent('$0.25');
-    expect(card).toHaveTextContent('5.295 g per serving');
+    expect(card.textContent).not.toMatch(/\d\s*g per serving/);
+    expect(card.textContent).not.toMatch(/\d\s*oz per serving/);
     expect(card).toHaveTextContent('Na 950 mg · K 202 mg · Mg 60 mg');
     expect(screen.queryByRole('link', { name: '+ New recipe' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Paste recipe link' })).not.toBeInTheDocument();
@@ -57,16 +58,34 @@ describe('Recipes screen', () => {
     render(<RecipesScreen />);
     expect(await screen.findByText('Time for a backup')).toBeInTheDocument();
   });
+
+  it('hides the backup reminder with Not now, and keeps it snoozed (B3)', async () => {
+    const user = userEvent.setup();
+    await createBatch(entry());
+    const view = render(<RecipesScreen />);
+    await user.click(await screen.findByRole('button', { name: 'Not now' }));
+    await vi.waitFor(() => expect(screen.queryByText('Time for a backup')).not.toBeInTheDocument());
+    const snoozedUntil = (await db.settings.toArray())[0]!.backupReminderSnoozedUntil!;
+    expect(snoozedUntil).toBeGreaterThan(Date.now() + 29 * 24 * 60 * 60 * 1000);
+    view.unmount();
+    render(<RecipesScreen />);
+    await screen.findByText('Watermelon');
+    expect(screen.queryByText('Time for a backup')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Not now' })).not.toBeInTheDocument();
+  });
 });
 
 describe('Ingredients screen', () => {
   it('is a read-only price list with prices per gram', async () => {
     render(<IngredientsScreen />);
     const salt = (await screen.findByText('Redmond Real Salt')).closest('li')!;
+    expect(salt).toHaveTextContent('737.1 g package');
     expect(salt).toHaveTextContent('$11.39');
     expect(salt).toHaveTextContent('$0.0155/g');
     expect(within(salt).queryByText('Price not set')).not.toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByText(/built in/)).toBeInTheDocument();
+    expect(screen.getByText('Stevia').closest('li')).toHaveTextContent('Flavor');
   });
 });
 
@@ -192,8 +211,11 @@ describe('More, About and Help', () => {
 
   it('has help topics', () => {
     render(<HelpScreen />);
-    for (const title of ['Making a batch', 'Mixing mode', 'Sharing a recipe', 'Backups', 'Measuring by teaspoon', 'Storage tips']) {
+    for (const title of ['Making a batch', 'Mixing mode', 'Sharing a recipe', 'Backups', 'Storage tips']) {
       expect(screen.getByText(title)).toBeInTheDocument();
     }
+    expect(screen.queryByText('Measuring by teaspoon')).not.toBeInTheDocument();
+    expect(screen.getByText(/link to that recipe's page/)).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/teaspoon|Paste recipe link|actual weight/i);
   });
 });

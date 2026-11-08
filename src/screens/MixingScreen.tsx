@@ -43,7 +43,6 @@ function MixingBody({ recipe, ingredients, settings }: { recipe: Recipe; ingredi
       size,
       order,
       step: saved ? Math.min(Math.max(0, saved.step), order.length + 1) : 0,
-      actuals: saved?.actuals ?? {},
       startedAt: saved?.startedAt ?? Date.now(),
     };
   });

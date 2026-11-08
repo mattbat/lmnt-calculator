@@ -4,7 +4,6 @@ import {
   formatWeight,
   gramsToOunces,
   ouncesToGrams,
-  parsePackageSize,
   roundToPrecision,
 } from './units';
 
@@ -18,33 +17,6 @@ describe('weight conversion', () => {
     fc.assert(
       fc.property(fc.double({ min: 0, max: 1e6, noNaN: true }), (g) => {
         expect(ouncesToGrams(gramsToOunces(g))).toBeCloseTo(g, 6);
-      }),
-    );
-  });
-});
-
-describe('parsePackageSize', () => {
-  it('converts g, kg, oz and lb to grams', () => {
-    expect(parsePackageSize(250, 'g')).toBe(250);
-    expect(parsePackageSize(1.5, 'kg')).toBe(1500);
-    expect(parsePackageSize(26, 'oz')).toBeCloseTo(737.087, 2);
-    expect(parsePackageSize(1, 'lb')).toBeCloseTo(453.592, 2);
-  });
-
-  it('rejects bad input', () => {
-    expect(parsePackageSize(0, 'g')).toBeNull();
-    expect(parsePackageSize(-1, 'kg')).toBeNull();
-    expect(parsePackageSize(NaN, 'oz')).toBeNull();
-    expect(parsePackageSize(Infinity, 'lb')).toBeNull();
-    expect(parsePackageSize(5, 'stone' as never)).toBeNull();
-  });
-
-  it('round-trips oz and lb back to the entered value', () => {
-    fc.assert(
-      fc.property(fc.double({ min: 0.01, max: 1000, noNaN: true }), (v) => {
-        expect(gramsToOunces(parsePackageSize(v, 'oz')!)).toBeCloseTo(v, 6);
-        expect(parsePackageSize(v, 'lb')!).toBeCloseTo(parsePackageSize(v * 16, 'oz')!, 6);
-        expect(parsePackageSize(v, 'kg')! / 1000).toBeCloseTo(v, 9);
       }),
     );
   });

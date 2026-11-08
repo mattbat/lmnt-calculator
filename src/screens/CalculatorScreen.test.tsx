@@ -94,18 +94,33 @@ describe('Calculator screen', () => {
     expect(screen.queryByText(/Low precision/)).not.toBeInTheDocument();
   });
 
-  it('shows totals, electrolytes and savings (C5, C6)', async () => {
+  it('shows a compact summary of totals, savings and electrolytes (C5, C6)', async () => {
     await open();
-    const stat = (label: string) => screen.getByText(label).closest('div')!;
-    expect(stat('Cost per serving')).toHaveTextContent('$0.25');
-    expect(stat('Saved per serving')).toHaveTextContent('$1.25');
-    expect(stat('Saved per batch')).toHaveTextContent('$37.59');
-    expect(stat('Batch weight')).toHaveTextContent('158.85 g');
-    expect(stat('Fill per vial')).toHaveTextContent('5.30 g');
-    expect(stat('Sodium')).toHaveTextContent('950 mg');
-    expect(stat('Sodium')).toHaveTextContent('41% daily value');
-    expect(stat('Potassium')).toHaveTextContent('202 mg');
-    expect(stat('Magnesium')).toHaveTextContent('60 mg');
+    const card = screen.getByRole('region', { name: 'Summary' });
+    expect(card).toHaveTextContent('158.85 g');
+    expect(card).toHaveTextContent('30 × 5.30 g');
+    expect(card).toHaveTextContent('$7.41');
+    expect(card).toHaveTextContent('$0.25 / serving');
+    expect(card).toHaveTextContent('save $1.25 a serving ($37.59 a batch) vs $1.50 retail');
+    expect(card).toHaveTextContent('Na 950 mg · 41%');
+    expect(card).toHaveTextContent('K 202 mg · 4%');
+    expect(card).toHaveTextContent('Mg 60 mg');
+    expect(screen.queryByText('Totals')).not.toBeInTheDocument();
+    expect(screen.queryByText('Electrolytes per serving')).not.toBeInTheDocument();
+  });
+
+  it('puts Start mixing and Share before the Weigh out list', async () => {
+    await open();
+    const start = screen.getByRole('button', { name: 'Start mixing' });
+    const share = screen.getByRole('button', { name: 'Share recipe' });
+    const weigh = screen.getByRole('heading', { name: 'Weigh out' });
+    const batch = screen.getByRole('heading', { name: 'Batch size' });
+    const summary = screen.getByRole('region', { name: 'Summary' });
+    const before = (x: Node, y: Node) => Boolean(x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(before(batch, start)).toBe(true);
+    expect(before(start, weigh)).toBe(true);
+    expect(before(share, weigh)).toBe(true);
+    expect(before(weigh, summary)).toBe(true);
   });
 
   it('rounds vials up and notes the last, partial vial', async () => {
@@ -142,7 +157,6 @@ describe('Calculator screen', () => {
       size: { mode: 'servings', servings: 30 },
       order: ['salt'],
       step: 0,
-      actuals: {},
       startedAt: 1,
     });
     await open();
