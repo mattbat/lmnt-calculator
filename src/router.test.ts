@@ -24,6 +24,30 @@ describe('router (T3)', () => {
     expect(tabFor({ name: 'log' })).toBe('log');
   });
 
+  it('parses detail routes', () => {
+    expect(parseRoute('#/recipe/lemon')).toEqual({ name: 'recipe', id: 'lemon' });
+    expect(parseRoute('#/recipe/lemon/edit')).toEqual({ name: 'recipeEdit', id: 'lemon' });
+    expect(parseRoute('#/recipe')).toEqual({ name: 'recipes' });
+    expect(parseRoute('#/mix/lemon')).toEqual({ name: 'mix', id: 'lemon' });
+    expect(parseRoute('#/mix')).toEqual({ name: 'recipes' });
+    expect(parseRoute('#/log/abc')).toEqual({ name: 'logEntry', id: 'abc' });
+    expect(parseRoute('#/more/settings')).toEqual({ name: 'settings' });
+    expect(parseRoute('#/more/about')).toEqual({ name: 'about' });
+    expect(parseRoute('#/more/help')).toEqual({ name: 'help' });
+    expect(parseRoute('#/more/other')).toEqual({ name: 'more' });
+    expect(parseRoute('#/recipe/%E0%A4%A')).toEqual({ name: 'recipes' });
+    expect(parseRoute(paths.recipe('a b'))).toEqual({ name: 'recipe', id: 'a b' });
+    expect(parseRoute(paths.newRecipe())).toEqual({ name: 'recipeEdit', id: 'new' });
+    expect(parseRoute(paths.mix('x'))).toEqual({ name: 'mix', id: 'x' });
+    expect(parseRoute(paths.logEntry('x'))).toEqual({ name: 'logEntry', id: 'x' });
+    expect(parseRoute(paths.recipeEdit('x'))).toEqual({ name: 'recipeEdit', id: 'x' });
+    expect(tabFor({ name: 'mix', id: 'x' })).toBe('recipes');
+    expect(tabFor({ name: 'logEntry', id: 'x' })).toBe('log');
+    expect(tabFor({ name: 'help' })).toBe('more');
+    expect(tabFor({ name: 'recipe', id: 'x' })).toBe('recipes');
+    expect(tabFor({ name: 'recipeEdit', id: 'x' })).toBe('recipes');
+  });
+
   it('builds paths that parse back to the same tab', () => {
     for (const tab of ['recipes', 'log', 'ingredients', 'more'] as const) {
       expect(parseRoute(paths[tab]())).toEqual({ name: tab });
