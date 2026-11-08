@@ -24,12 +24,3 @@ export function vialPlan(result: Pick<BatchResult, 'servings' | 'vials' | 'fillG
 export function pricePerGram(ingredient: Pick<Ingredient, 'packageGrams' | 'packagePrice'>): number {
   return ingredient.packageGrams > 0 ? ingredient.packagePrice / ingredient.packageGrams : 0;
 }
-
-/** How far a weighed amount is from its target, as a fraction (0.05 = 5%). */
-export function weightDeviation(actualGrams: number, targetGrams: number): number {
-  if (!(targetGrams > 0)) return 0;
-  return Math.abs(actualGrams - targetGrams) / targetGrams;
-}
-
-/** M3: a weighed amount more than 5% off target gets a gentle flag. */
-export const DEVIATION_FLAG = 0.05;

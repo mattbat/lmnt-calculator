@@ -16,7 +16,7 @@ import { formatDateTime } from '../format';
 import { paths } from '../router';
 import type { ScalePrecision, Settings, ThemeSetting, WeightUnit } from '../types';
 
-const counts = (c: TableCounts) => `${c.ingredients} ingredients, ${c.recipes} recipes, ${c.batches} log entries`;
+const counts = (c: TableCounts) => `${c.batches} log ${c.batches === 1 ? 'entry' : 'entries'}`;
 
 function RestoreSheet({
   backup,
@@ -41,7 +41,7 @@ function RestoreSheet({
     }
   };
   const { added, updated, unchanged } = summary.merge;
-  const sum = (c: TableCounts) => c.ingredients + c.recipes + c.batches;
+  const sum = (c: TableCounts) => c.batches;
   return (
     <Sheet title="Restore from backup" onClose={onClose}>
       <p>
@@ -145,15 +145,6 @@ function SettingsBody({ settings }: { settings: Settings }) {
             { value: 'oz', label: 'Ounces' },
           ]}
         />
-        <label className="switch-row">
-          <input
-            type="checkbox"
-            role="switch"
-            checked={settings.showTeaspoons}
-            onChange={(e) => void updateSettings({ showTeaspoons: e.target.checked })}
-          />
-          <span>Show approximate teaspoons</span>
-        </label>
       </Section>
 
       <Section title="Mixing">

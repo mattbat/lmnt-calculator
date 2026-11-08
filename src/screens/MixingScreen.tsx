@@ -1,15 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   calculateBatch,
-  DEVIATION_FLAG,
   formatWeight,
-  gramsToOunces,
   mixingOrder,
-  ouncesToGrams,
   vialPlan,
-  weightDeviation,
 } from '../calc';
-import { Chip, Confirm, Footer, Loading, NumField, TopBar } from '../components/ui';
+import { Chip, Confirm, Footer, Loading, TopBar } from '../components/ui';
 import { createBatch, newId, updateBatchNotes, useIngredients, useRecipe, useSettings } from '../data/repo';
 import { buildBatchInput } from '../batchEntry';
 import { useWakeLock } from '../hooks/useWakeLock';
@@ -47,7 +43,6 @@ function MixingBody({ recipe, ingredients, settings }: { recipe: Recipe; ingredi
       size,
       order,
       step: saved ? Math.min(Math.max(0, saved.step), order.length + 1) : 0,
-      actuals: saved?.actuals ?? {},
       startedAt: saved?.startedAt ?? Date.now(),
     };
   });
@@ -78,14 +73,6 @@ function MixingBody({ recipe, ingredients, settings }: { recipe: Recipe; ingredi
   const step = Math.min(session.step, fillStep);
   const go = (to: number) => setSession((s) => ({ ...s, step: Math.min(Math.max(0, to), fillStep) }));
 
-  const setActual = (id: string, value: number | undefined) =>
-    setSession((s) => {
-      const actuals = { ...s.actuals };
-      if (value === undefined || value < 0) delete actuals[id];
-      else actuals[id] = unit === 'oz' ? ouncesToGrams(value) : value;
-      return { ...s, actuals };
-    });
-
   // Postpones the current ingredient: it swaps with the next one, which becomes the current step.
   const postpone = () =>
     setSession((s) => {
@@ -97,7 +84,7 @@ function MixingBody({ recipe, ingredients, settings }: { recipe: Recipe; ingredi
   const finish = async () => {
     try {
       const batch = await createBatch(
-        buildBatchInput({ recipe, result, settings, order, actuals: session.actuals }),
+        buildBatchInput({ recipe, result, settings, order }),
       );
       clearMixSession(recipe.id);
       setFinishedId(batch.id);
@@ -142,9 +129,6 @@ function MixingBody({ recipe, ingredients, settings }: { recipe: Recipe; ingredi
 
   const stepLabels = [...order.map((id) => lineById.get(id)!.name), 'Mix', 'Fill'];
   const line = step < mixStep ? lineById.get(order[step]!) : undefined;
-  const actual = line ? session.actuals[line.ingredientId] : undefined;
-  const actualShown = actual === undefined ? undefined : unit === 'oz' ? Number(gramsToOunces(actual).toFixed(4)) : actual;
-  const deviation = line && actual !== undefined ? weightDeviation(actual, line.batchGrams) : 0;
 
   return (
     <main className="screen mix">
@@ -210,24 +194,7 @@ function MixingBody({ recipe, ingredients, settings }: { recipe: Recipe; ingredi
           <p className="mix-target num" data-testid="target">
             {fmt(line.batchGrams)}
           </p>
-          {settings.showTeaspoons && (
-            <p className="muted">{line.teaspoons ? `${line.teaspoons} (approximate)` : 'weigh only'}</p>
-          )}
           {line.lowPrecision && <Chip>Low precision: a small amount for this scale</Chip>}
-          <NumField
-            label={`Actual weight (${unit}, optional)`}
-            value={actualShown}
-            onValue={(v) => setActual(line.ingredientId, v)}
-            suffix={unit}
-            big
-            min={0}
-          />
-          {deviation > DEVIATION_FLAG && (
-            <p className="flag" role="status">
-              That's {Math.round(deviation * 100)}% away from the target. Fine if you're happy with it; otherwise add or
-              remove a little.
-            </p>
-          )}
           <div className="actions">
             <button type="button" className="btn big mix-btn" onClick={() => go(step + 1)}>
               Done → next
@@ -250,7 +217,7 @@ function MixingBody({ recipe, ingredients, settings }: { recipe: Recipe; ingredi
       ) : step === mixStep ? (
         <section className="mix-step" aria-label="Mix">
           <h2 className="mix-name">Mix</h2>
-          <p className="big-note">Combine everything and mix thoroughly. Break up clumps, or sift the fruit powder.</p>
+          <p className="big-note">Combine and mix thoroughly. Break up any clumps.</p>
           <div className="actions">
             <button type="button" className="btn big mix-btn" onClick={() => go(step + 1)}>
               Done → next

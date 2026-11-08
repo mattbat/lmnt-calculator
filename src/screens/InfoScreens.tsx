@@ -14,7 +14,7 @@ export function MoreScreen() {
         <li>
           <a className="card" href={paths.settings()}>
             <span className="line-name">Settings</span>
-            <span className="muted small">Units, scale, prices, theme, backup and restore</span>
+            <span className="muted small">Units, scale, retail price, theme, backup and restore</span>
           </a>
         </li>
         <li>
@@ -41,7 +41,8 @@ export function AboutScreen() {
       <TopBar title="About" back={paths.more()} backLabel="Back to More" />
       <p>
         LMNT Calculator helps you scale and mix a homemade electrolyte drink powder, weigh it one ingredient at a
-        time, and see what each serving costs. It is a personal, non-commercial project: no ads, no accounts, and
+        time, and see what each serving costs. The recipes and ingredient prices are built in, so the app is read-only;
+        the only things you change are your batch log and settings. It is a personal, non-commercial project: no ads, no accounts, and
         nothing leaves your phone.
       </p>
 
@@ -92,7 +93,8 @@ const TOPICS: { title: string; body: string[] }[] = [
     title: 'Making a batch',
     body: [
       'Open a recipe from the Recipes tab and choose how to size your batch: by servings, by vials, or by the total weight of mix you want.',
-      'The Weigh out list shows how many grams of each ingredient to measure. Tap Start mixing to be walked through it.',
+      'Tap Start mixing to be walked through it, or use the Weigh out list to see how many grams of each ingredient to measure.',
+      'The recipes and ingredient prices are built into the app and change only when the app updates.',
       'Each serving is meant for 16–32 oz (about 0.5–1 L) of water.',
     ],
   },
@@ -100,7 +102,6 @@ const TOPICS: { title: string; body: string[] }[] = [
     title: 'Mixing mode',
     body: [
       'Mixing mode shows one ingredient at a time. Tare the scale, weigh to the target, then tap Done → next. Tap a number in the strip to jump back.',
-      'You can type the actual weight if you like; it is saved in the log, and a difference over 5% gets a gentle flag.',
       'After the last ingredient: mix well, then fill the vials. Finish saves the batch to your log. The screen stays on while you mix, and mixing resumes where you left off if the phone locks.',
       'Tip: weigh on a dry day. Fruit powder and malic acid absorb moisture and clump. Use sealed vials and a food-safe desiccant pack.',
     ],
@@ -108,8 +109,8 @@ const TOPICS: { title: string; body: string[] }[] = [
   {
     title: 'Sharing a recipe',
     body: [
-      'Open a recipe and tap Share recipe. The link holds the recipe and ingredient details but no prices, and it never goes to a server.',
-      'Someone who opens the link sees a preview and can add it to their recipes. If you use the installed app, open the link in the browser, tap Copy for the LMNT Calculator app, then use Recipes → Paste recipe link in the app.',
+      "Open a recipe and tap Share recipe. The share sheet sends a link to that recipe's page (or copies the link if sharing isn't available on your device).",
+      "Whoever opens the link sees the notice once, then the recipe's calculator. The link carries no personal data, and your batch log is not shared.",
     ],
   },
   {
@@ -118,13 +119,6 @@ const TOPICS: { title: string; body: string[] }[] = [
       'Your data lives only on this device. Go to More → Settings → Back up now to save a file through the share sheet or as a download.',
       'To restore, choose the backup file, review the summary, then choose Merge (keeps the newer copy of each item) or Replace all.',
       'You will see a reminder if you have logged batches and not backed up for 60 days.',
-    ],
-  },
-  {
-    title: 'Measuring by teaspoon',
-    body: [
-      'Weighing is more accurate. Powders vary in density, so teaspoon amounts are approximate.',
-      'Turn on Show approximate teaspoons in Settings. For an ingredient with no teaspoon value, open it in Ingredients and use the Measure helper: level off 1 teaspoon, weigh it, and enter the weight.',
     ],
   },
   {

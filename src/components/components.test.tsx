@@ -213,3 +213,31 @@ describe('useWakeLock', () => {
     await vi.waitFor(() => expect(sentinel.release).toHaveBeenCalled());
   });
 });
+
+describe('NumField', () => {
+  it('keeps what the user is typing when a late save echoes back', async () => {
+    const { NumField } = await import('./ui');
+    const user = userEvent.setup();
+    const { rerender } = render(<NumField label="Price" value={0} onValue={() => {}} />);
+    const input = screen.getByLabelText('Price');
+    await user.clear(input);
+    await user.type(input, '1.25');
+    // An earlier keystroke's save ("1") arrives after the user typed more.
+    rerender(<NumField label="Price" value={1} onValue={() => {}} />);
+    expect(input).toHaveValue('1.25');
+    // Once the box loses focus it shows the saved value again.
+    rerender(<NumField label="Price" value={1.25} onValue={() => {}} />);
+    await user.tab();
+    expect(input).toHaveValue('1.25');
+  });
+
+  it('shows the saved value after leaving the box empty', async () => {
+    const { NumField } = await import('./ui');
+    const user = userEvent.setup();
+    render(<NumField label="Servings" value={30} onValue={() => {}} />);
+    const input = screen.getByLabelText('Servings');
+    await user.clear(input);
+    await user.tab();
+    expect(input).toHaveValue('30');
+  });
+});

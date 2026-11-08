@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
+import { DEFAULT_INGREDIENTS, DEFAULT_RECIPES } from '../calc/defaults';
 import { db, SETTINGS_ID, type SettingsRow } from './db';
 import type { BatchLogEntry, BatchSize, Ingredient, Recipe, Settings } from '../types';
 
@@ -23,117 +24,6 @@ export class RepoError extends Error {
     super(message);
     this.name = 'RepoError';
   }
-}
-
-/** "Lemon" -> "Lemon (2)", then "Lemon (3)"...: the first name not in `taken` (case-insensitive). */
-export function uniqueName(name: string, taken: Iterable<string>): string {
-  const used = new Set([...taken].map((n) => n.trim().toLowerCase()));
-  if (!used.has(name.trim().toLowerCase())) return name;
-  for (let n = 2; ; n++) {
-    const candidate = `${name} (${n})`;
-    if (!used.has(candidate.toLowerCase())) return candidate;
-  }
-}
-
-// Ingredients
-
-export type IngredientInput = Omit<Ingredient, 'id' | 'updatedAt'>;
-
-export async function createIngredient(input: IngredientInput): Promise<Ingredient> {
-  const ingredient: Ingredient = { ...input, id: newId(), updatedAt: Date.now() };
-  await db.ingredients.add(ingredient);
-  return ingredient;
-}
-
-export async function updateIngredient(id: string, changes: Partial<Omit<Ingredient, 'id'>>): Promise<void> {
-  await db.ingredients.update(id, { ...changes, updatedAt: Date.now() });
-}
-
-/** Refuses to delete an ingredient a recipe still uses, so no recipe is left with a missing line. */
-export async function deleteIngredient(id: string): Promise<void> {
-  await db.transaction('rw', db.ingredients, db.recipes, async () => {
-    const users = (await db.recipes.toArray()).filter((r) => r.lines.some((l) => l.ingredientId === id));
-    if (users.length > 0) {
-      const ingredient = await db.ingredients.get(id);
-      const names = users.map((r) => `"${r.name}"`).join(', ');
-      throw new RepoError(
-        `${ingredient ? `"${ingredient.name}"` : 'This ingredient'} is used by ${names}. Remove it from ${users.length === 1 ? 'that recipe' : 'those recipes'} first.`,
-      );
-    }
-    await db.ingredients.delete(id);
-  });
-}
-
-// Recipes
-
-export type RecipeInput = Omit<Recipe, 'id' | 'updatedAt' | 'sortOrder' | 'builtIn'> & { sortOrder?: number };
-
-async function assertIngredientsExist(recipe: Pick<Recipe, 'lines'>): Promise<void> {
-  const ids = [...new Set(recipe.lines.map((l) => l.ingredientId))];
-  const found = await db.ingredients.bulkGet(ids);
-  if (found.some((i) => !i)) throw new RepoError('This recipe uses an ingredient that no longer exists.');
-}
-
-async function nextSortOrder(): Promise<number> {
-  const last = await db.recipes.orderBy('sortOrder').last();
-  return last ? last.sortOrder + 1 : 0;
-}
-
-export async function createRecipe(input: RecipeInput): Promise<Recipe> {
-  return db.transaction('rw', db.recipes, db.ingredients, async () => {
-    await assertIngredientsExist(input);
-    const recipe: Recipe = {
-      ...input,
-      id: newId(),
-      sortOrder: input.sortOrder ?? (await nextSortOrder()),
-      updatedAt: Date.now(),
-    };
-    await db.recipes.add(recipe);
-    return recipe;
-  });
-}
-
-export async function updateRecipe(id: string, changes: Partial<Omit<Recipe, 'id'>>): Promise<void> {
-  await db.transaction('rw', db.recipes, db.ingredients, async () => {
-    if (changes.lines) await assertIngredientsExist({ lines: changes.lines });
-    await db.recipes.update(id, { ...changes, updatedAt: Date.now() });
-  });
-}
-
-/** Copies a recipe as "Name (2)". The copy is never built-in. */
-export async function duplicateRecipe(id: string): Promise<Recipe> {
-  return db.transaction('rw', db.recipes, async () => {
-    const source = await db.recipes.get(id);
-    if (!source) throw new RepoError('That recipe no longer exists.');
-    const all = await db.recipes.toArray();
-    const copy: Recipe = {
-      ...source,
-      lines: source.lines.map((l) => ({ ...l })),
-      id: newId(),
-      name: uniqueName(
-        source.name,
-        all.map((r) => r.name),
-      ),
-      sortOrder: all.reduce((max, r) => Math.max(max, r.sortOrder), -1) + 1,
-      builtIn: false,
-      updatedAt: Date.now(),
-    };
-    await db.recipes.add(copy);
-    return copy;
-  });
-}
-
-/** Deletes a recipe. Logged batches keep their own snapshot, so the log is untouched. */
-export async function deleteRecipe(id: string): Promise<void> {
-  await db.transaction('rw', db.recipes, db.settings, async () => {
-    await db.recipes.delete(id);
-    const row = await db.settings.get(SETTINGS_ID);
-    if (row && id in row.lastBatchSize) {
-      const lastBatchSize = { ...row.lastBatchSize };
-      delete lastBatchSize[id];
-      await db.settings.update(SETTINGS_ID, { lastBatchSize, updatedAt: Date.now() });
-    }
-  });
 }
 
 // Batches
@@ -184,6 +74,13 @@ export async function updateSettings(changes: Partial<Settings>): Promise<void> 
   await db.settings.update(SETTINGS_ID, { ...changes, updatedAt: Date.now() });
 }
 
+const SNOOZE_DAYS = 30;
+
+/** "Not now" on the backup reminder: hides it for 30 days. */
+export async function snoozeBackupReminder(now = Date.now()): Promise<void> {
+  await updateSettings({ backupReminderSnoozedUntil: now + SNOOZE_DAYS * 24 * 60 * 60 * 1000 });
+}
+
 /** Remembers the last batch size used for a recipe (C8). */
 export async function setLastBatchSize(recipeId: string, size: BatchSize): Promise<void> {
   await db.transaction('rw', db.settings, async () => {
@@ -197,16 +94,21 @@ export async function setLastBatchSize(recipeId: string, size: BatchSize): Promi
 
 // React hooks. Each returns undefined while loading.
 
-export function useRecipes(): Recipe[] | undefined {
-  return useLiveQuery(() => db.recipes.orderBy('sortOrder').toArray(), []);
+/** Built-in recipes, sorted for the Recipes list. They come from code, so every update ships new values. */
+const RECIPES: Recipe[] = [...DEFAULT_RECIPES].sort((a, b) => a.sortOrder - b.sortOrder);
+const INGREDIENTS: Ingredient[] = [...DEFAULT_INGREDIENTS].sort((a, b) => a.name.localeCompare(b.name));
+
+export function useRecipes(): Recipe[] {
+  return RECIPES;
 }
 
+/** The built-in recipe with this id, or undefined when there isn't one. */
 export function useRecipe(id: string | undefined): Recipe | undefined {
-  return useLiveQuery(() => (id ? db.recipes.get(id) : undefined), [id]);
+  return id ? RECIPES.find((r) => r.id === id) : undefined;
 }
 
-export function useIngredients(): Ingredient[] | undefined {
-  return useLiveQuery(async () => (await db.ingredients.toArray()).sort((a, b) => a.name.localeCompare(b.name)), []);
+export function useIngredients(): Ingredient[] {
+  return INGREDIENTS;
 }
 
 /** Batches newest first, optionally only one recipe's (L2). */

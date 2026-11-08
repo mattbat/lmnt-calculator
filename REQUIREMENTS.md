@@ -1,6 +1,6 @@
 # LMNT Calculator — Requirements
 
-**Status:** Draft v0.1 · 2026-11-07
+**Status:** v0.2 · 2026-11-07 (updated after the first phone test: read-only, built-in recipes; see the decisions log)
 **Owner:** Matt
 **Primary user:** Matt, at the kitchen counter with a gram scale, mixing a new batch of electrolyte powder on his phone
 **Secondary users:** friends Matt shares the app or a recipe with, and anyone who finds it at mattbat.com/lmnt-calculator/
@@ -13,7 +13,9 @@ LMNT Calculator is a phone app (PWA) for mixing a homemade electrolyte drink pow
 
 You pick a recipe and a batch size, and the app tells you exactly how many grams of each ingredient to weigh. It then walks you through weighing them one at a time and tells you how much powder goes in each vial. It also shows what each serving costs, how much sodium, potassium and magnesium it contains, and how much you save compared with buying LMNT. Every batch is logged with notes, so next time you know what you made and how it turned out.
 
-It replaces Matt's spreadsheet (`lmnt.xlsx`). Success means Matt never opens the spreadsheet again, never does math while holding a spatula, and can text a friend a recipe that opens ready to use.
+**Read-only by design (2026-11-07).** The recipes and ingredient prices are built into the app. People can't edit, add or delete them. When Matt changes a recipe or a price in the code, every phone gets it on the next update.
+
+It replaces Matt's spreadsheet (`lmnt.xlsx`). Success means Matt never opens the spreadsheet again, never does math while holding a spatula, and can text a friend a link that opens a recipe ready to use.
 
 **Not commercial.** LMNT Calculator is a personal project, like a blog post about using LMNT's published recipe. It isn't sold, has no ads, and is not made by or affiliated with LMNT (see §10).
 
@@ -21,14 +23,14 @@ It replaces Matt's spreadsheet (`lmnt.xlsx`). Success means Matt never opens the
 
 ### Goals (v1)
 - Calculate a batch from any of three sizes: a **number of servings**, a **number of vials**, or a **total weight of mix**.
-- Come with Matt's three recipes (**Raw**, **Lemon**, **Watermelon**), and let users edit them or add their own.
+- Come with Matt's three built-in recipes (**Raw**, **Lemon**, **Watermelon**). ~~Let users edit them or add their own.~~ *Dropped 2026-11-07: the app is read-only.*
 - Store every recipe as **grams per serving** and scale every ingredient together. (This fixes the spreadsheet bug, where the base amounts were typed in for 30 servings and didn't scale.)
 - Show cost per batch and per serving from ingredient prices, and savings compared with a retail price per stick.
 - Show sodium, potassium and magnesium (mg) per serving.
 - Provide a **mixing mode** for weighing, one ingredient at a time, with the screen kept on.
 - Keep a **batch log** with notes.
-- Let users share a recipe as a link.
-- Convert units: grams, ounces, and approximate teaspoons.
+- Let users share a link to a recipe's page.
+- Convert units: grams and ounces. (~~Approximate teaspoons~~ dropped 2026-11-07.)
 - Show a clear disclaimer and credit LMNT.
 - Work fully offline, with backup and restore.
 
@@ -60,31 +62,32 @@ These follow next5 so the two apps share code, tooling and deployment.
 
 ## 4. Core concepts
 
-- **Ingredient:** something you buy and weigh. It has a name, a package size (grams), a package price, an optional buy link, its **electrolyte content** (the fraction of its weight that is sodium, potassium and magnesium), and an optional **grams per teaspoon** for volume measuring.
-- **Recipe:** a name, a color, optional notes, and a list of ingredients, each with **grams per serving**. Ingredients are grouped as **Base** (the electrolytes) or **Flavor** (fruit powder, acid, sweetener), but this is for display only. The math treats every line the same.
+- **Ingredient:** something you buy and weigh. It has a name, a package size (grams), a package price, an optional buy link, and its **electrolyte content** (the fraction of its weight that is sodium, potassium and magnesium). Ingredients are built in and read-only.
+- **Recipe:** built in and read-only: a name, a color, optional notes, and a list of ingredients, each with **grams per serving**. Ingredients are grouped as **Base** (the electrolytes) or **Flavor** (fruit powder, acid, sweetener), but this is for display only. The math treats every line the same.
 - **Serving:** one drink, meant for 16–32 oz of water (from LMNT's guidance).
 - **Vial:** a container holding a whole number of servings (default 1). The fill weight is grams per serving × servings per vial.
-- **Batch:** one mixing session. It's a recipe × a number of servings, with the weight of each ingredient, the fill weight per vial, the cost, and notes. Once logged, a batch keeps a **snapshot** of the recipe as it was, so editing the recipe later never changes the history.
+- **Batch:** one mixing session. It's a recipe × a number of servings, with the weight of each ingredient, the fill weight per vial, the cost, and notes. Once logged, a batch keeps a **snapshot** of the recipe as it was, so a later change to a built-in recipe never changes the history.
 - **Strength:** not in v1 (see Q3). For a lighter drink you use less powder or more water.
 
-## 5. Default data
+## 5. Built-in data
+
+The recipes and ingredients below live in the code (`src/calc/defaults.ts`), not in the database. They are read-only in the app and change only when an app update ships new values.
 
 ### 5.1 Ingredients (from `lmnt.xlsx`)
 
-| Ingredient | Package | Price | $/g | Electrolyte content | g/tsp (approx.) |
-|---|---|---|---|---|---|
-| Redmond Real Salt (sea salt) | 26 oz (737.1 g) | $11.39 | 0.0155 | Sodium **0.38** (check the label, Q1) | 5.0 |
-| Potassium chloride | 250 g | $17.97 | 0.0719 | Potassium 0.524 | 5.75 |
-| Magnesium malate | 250 g | $19.97 | 0.0799 | Magnesium 0.154 | — |
-| Malic acid | 8 oz (226.8 g) | $8.95 | 0.0395 | — | — |
-| Citric acid | 340 g | $6.99 | 0.0206 | — | — |
-| Lemon powder | 284 g | $11.98 | 0.0422 | — | — |
-| Watermelon juice powder | 250 g | $20.97 | 0.0839 | — | — |
-| Stevia | 4 oz (113.4 g) | $15.99 | 0.1410 | — | — |
+| Ingredient | Package | Price | $/g | Electrolyte content |
+|---|---|---|---|---|
+| Redmond Real Salt (sea salt) | 26 oz (737.1 g) | $11.39 | 0.0155 | Sodium **0.38** (check the label, Q1) |
+| Potassium chloride | 250 g | $17.97 | 0.0719 | Potassium 0.524 |
+| Magnesium malate | 250 g | $19.97 | 0.0799 | Magnesium 0.154 |
+| Malic acid | 8 oz (226.8 g) | $8.95 | 0.0395 | — |
+| Citric acid | 340 g | $6.99 | 0.0206 | — |
+| Lemon powder | 284 g | $11.98 | 0.0422 | — |
+| Watermelon juice powder | 250 g | $20.97 | 0.0839 | — |
+| Stevia | 4 oz (113.4 g) | $15.99 | 0.1410 | — |
 
 - Electrolyte fractions: pure sodium chloride is 39.3% sodium and potassium chloride is 52.4% potassium (from atomic weights). Magnesium malate is 15.4% magnesium, from LMNT's 390 mg → 60 mg. Redmond Real Salt contains trace minerals, so it is a little under 39.3%. The default is a placeholder until it's checked against the label.
-- The teaspoon weights for salt and potassium chloride come from LMNT's volume measurements (75 g ≈ 15 tsp; 11.5 g ≈ 2 tsp). The others are blank until the user weighs a level teaspoon (see U3).
-- Users can add **di-magnesium malate** (22.6% magnesium, 0.265 g per serving for 60 mg) as an alternative, but it isn't a default.
+- **Di-magnesium malate** (22.6% magnesium, 0.265 g per serving for 60 mg) is a possible alternative that Matt could add in a later update. It isn't built in.
 
 ### 5.2 Recipes (grams per serving)
 
@@ -105,7 +108,7 @@ These follow next5 so the two apps share code, tooling and deployment.
 The spreadsheet uses 11.5 g potassium chloride per 30 servings (0.3833 g each). LMNT's per-serving figure is 0.385 g, which gives 11.55 g per 30. The app uses LMNT's figure (see Q2).
 
 ### 5.3 Settings defaults
-- Retail comparison: **$1.50 per stick** (LMNT lists a 30-count box at $45; about $1.28 with Amazon Subscribe & Save). Editable.
+- Retail comparison: **$1.50 per stick** (LMNT lists a 30-count box at $45; about $1.28 with Amazon Subscribe & Save). Editable in Settings.
 - Scale precision: **0.01 g**. Editable: 0.01 / 0.1 / 1 g.
 - Servings per vial: **1**.
 - Default batch: **30 servings**.
@@ -120,8 +123,8 @@ The spreadsheet uses 11.5 g potassium chloride per 30 servings (0.3833 g each). 
 | C2 | **Batch size by vials:** enter V vials. N = V × servings per vial. |
 | C3 | **Batch size by total weight:** enter W grams of mix. N = floor(W ÷ grams per serving), and the app shows the leftover powder. |
 | C4 | Every ingredient line shows the batch weight rounded to the scale precision, plus the per-serving weight. Rounding is applied for display only. Totals and cost use the unrounded values. |
-| C5 | **Totals:** batch weight, fill weight per vial, cost per batch, cost per serving, and savings compared with retail (per serving and per batch: (retail − cost per serving) × N). |
-| C6 | **Electrolytes per serving:** for each mineral, the sum over ingredients of grams per serving × fraction × 1000 (mg). Also shown as a share of the FDA daily value for sodium (2,300 mg) and potassium (4,700 mg). |
+| C5 | **Totals:** batch weight, fill weight per vial, cost per batch, cost per serving, and savings compared with retail (per serving and per batch: (retail − cost per serving) × N). Shown in one compact **Summary** card (decided 2026-11-07): batch weight, vials × fill, and batch cost in a row; then cost per serving and the savings; then the electrolytes. |
+| C6 | **Electrolytes per serving:** for each mineral, the sum over ingredients of grams per serving × fraction × 1000 (mg). Also shown as a share of the FDA daily value for sodium (2,300 mg) and potassium (4,700 mg), as chips in the Summary card. |
 | C7 | **Precision warning:** if any batch weight is less than 10× the scale precision (rounding is off by up to half a step, so below 10× it could be off by more than 5%), mark that line and suggest a bigger batch or a finer scale. Example: on a 0.1 g scale, 10 servings of Watermelon needs 1.2 g of stevia, which is fine. 1 serving needs 0.12 g, which gets a warning. |
 | C8 | Changing the batch size or recipe updates everything instantly. Nothing needs saving. The last batch size used for each recipe is remembered. |
 | C9 | The calculation is one pure TypeScript module (`src/calc`) with no React, Dexie or DOM imports, so it can be tested on its own (Q-2). |
@@ -130,11 +133,11 @@ The spreadsheet uses 11.5 g potassium chloride per 30 servings (0.3833 g each). 
 
 | ID | Requirement |
 |----|-------------|
-| M1 | Started from the calculator with **Start mixing**. Shows one ingredient at a time in large type: name, target weight, and a reminder to **tare the scale first**. |
+| M1 | Started from the calculator with **Start mixing**, which sits directly under the batch size so it is reachable without scrolling. Shows one ingredient at a time in large type: name, target weight, and a reminder to **tare the scale first**. |
 | M2 | **Done → next** moves to the next ingredient. A progress strip shows done and remaining ingredients, and any ingredient can be tapped to jump back. |
-| M3 | Optional **actual weight** field for each ingredient. If the user enters it, the log records it, and a difference over 5% gets a gentle flag. |
+| M3 | ~~Optional **actual weight** field for each ingredient, with a flag when more than 5% off.~~ *Dropped 2026-11-07.* Old log entries that recorded actual weights still show them. |
 | M4 | Order: Base ingredients first (largest first), then Flavor. Within Flavor, the smallest ingredients go first, so a slip with stevia doesn't waste fruit powder. Users can reorder. |
-| M5 | After the last ingredient: a **Mix** step ("Combine and mix thoroughly; break up clumps or sift the fruit powder"), then a **Fill** step: "Fill V vials with X g each" plus any leftover. |
+| M5 | After the last ingredient: a **Mix** step ("Combine and mix thoroughly. Break up any clumps."), then a **Fill** step: "Fill V vials with X g each" plus any leftover. |
 | M6 | The screen stays on during mixing mode (Screen Wake Lock, as in next5). If the phone locks or the app is closed, mixing mode resumes on the same step. |
 | M7 | **Finish** saves the batch to the log (§8) and offers a notes field there and then. **Cancel** discards it after confirming. |
 | M8 | Tips shown once, and available from Help: weigh on a dry day; fruit powder and malic acid absorb moisture and clump; use sealed vials and a food-safe desiccant pack. |
@@ -143,25 +146,25 @@ The spreadsheet uses 11.5 g potassium chloride per 30 servings (0.3833 g each). 
 
 | ID | Requirement |
 |----|-------------|
-| L1 | Each entry stores the date, a recipe snapshot (name, color, ingredients and grams per serving), servings, vials, fill weight, each ingredient's target (and actual, if entered) weight, cost, and **notes**. |
+| L1 | Each entry stores the date, a recipe snapshot (name, color, ingredients and grams per serving), servings, vials, fill weight, each ingredient's target weight, cost, and **notes**. (Entries made before 2026-11-07 may also have actual weights, which still show.) |
 | L2 | The log lists entries newest first, filterable by recipe. Each row shows the date, recipe, servings, and the first line of the notes. |
 | L3 | Notes can be added or edited at any time afterwards ("A bit sour; try 0.5 g malic acid next time"). |
-| L4 | **Make again** opens the calculator with that batch's recipe and size. If the recipe has changed since, the app asks whether to use the recipe as it was then or as it is now. |
+| L4 | **Make again** opens the calculator with that batch's recipe and size. Simplified 2026-11-07: recipes can't be edited, so there is no "recipe changed" choice. If the recipe no longer exists in the app, the entry still shows its snapshot and Make again is hidden. |
 | L5 | Entries can be deleted after confirming. Batches can also be logged by hand without mixing mode. |
 | L6 | **Optional rating** (1–5) on each entry. See Q5. |
 
 ## 9. Screens
 
-1. **Recipes (home):** a card for each recipe showing its color, name, grams per serving, cost per serving, and sodium / potassium / magnesium. Buttons for **+ New recipe** and **Paste recipe link**.
-2. **Calculator:** for the chosen recipe. Batch size (servings / vials / weight), ingredient lines, totals, electrolytes, savings, **Start mixing**, **Share recipe**, **Edit recipe**.
+1. **Recipes (home):** a card for each built-in recipe showing its color, name, cost per serving, and sodium / potassium / magnesium. (No grams per serving, and no **+ New recipe** or **Paste recipe link**: dropped 2026-11-07.)
+2. **Calculator:** for the chosen recipe. Top to bottom: header with the name; batch size (servings / vials / weight); **Start mixing** (with **Share recipe** as a smaller secondary button); the weigh-out list; the compact **Summary** card; the D2 footer. (No **Edit recipe**: dropped.)
 3. **Mixing mode** (§7).
-4. **Recipe editor:** name, color, notes, ingredient lines (pick from Ingredients or add a new one), grams per serving, reorder, duplicate, delete. Live totals update as you edit.
-5. **Ingredients:** the price list. Package size and unit, price, buy link, electrolyte fractions, and grams per teaspoon with a **Measure** helper (weigh 1 level tsp). Shows the price per gram.
+4. ~~**Recipe editor**~~ *Dropped 2026-11-07: recipes are built in and read-only.*
+5. **Ingredients:** a read-only price list: name, package size, price, price per gram, and buy link if there is one. No edit, add or delete.
 6. **Log** (§8) and **Log entry**.
-7. **Receive recipe:** the screen a share link opens (§11).
+7. ~~**Receive recipe**~~ *Dropped 2026-11-07.* A shared link opens the recipe's own page (§11).
 8. **Settings:** units, scale precision, servings per vial, retail comparison price, theme, backup and restore, version, and check for updates.
 9. **About:** what LMNT Calculator is, a credit and link to LMNT's recipe article, the not-affiliated statement, the full disclaimer (§10), a **Buy the real thing** link to drinklmnt.com, and **Equipment** (a placeholder in v1).
-10. **Help:** short topics on making a batch, mixing mode, sharing, backups, measuring by teaspoon, and storage tips.
+10. **Help:** short topics on making a batch, mixing mode, sharing, backups, and storage tips.
 
 Navigation: a bottom tab bar with **Recipes · Log · Ingredients · More** (Settings, About, Help).
 
@@ -173,35 +176,32 @@ Navigation: a bottom tab bar with **Recipes · Log · Ingredients · More** (Set
 | D2 | **Every calculator screen** shows a short footer: *"Not medical advice · Not affiliated with LMNT."* It links to About. |
 | D3 | **About** has the full text: not medical advice; not made by or affiliated with LMNT; LMNT is a trademark of its owner; the base ratios come from the recipe LMNT published (linked); store powders away from children, since concentrated potassium chloride is harmful in large amounts; the user is responsible for their ingredients and measurements. |
 | D4 | **Branding:** LMNT Calculator has its own icon, colors and type, and doesn't copy LMNT's logo, fonts or packaging. |
-| D5 | A shared recipe opens with the D2 footer and a link to the D1 notice for people who haven't seen it. |
+| D5 | A shared recipe link opens the recipe's calculator, which has the D2 footer. Anyone who hasn't seen the D1 notice gets it first. |
 
 ## 11. Sharing
 
 | ID | Requirement |
 |----|-------------|
-| SH1 | **Share recipe** creates a link like `https://mattbat.com/lmnt-calculator/#r=<data>`. The recipe (name, color, notes, ingredient lines with grams per serving, and each ingredient's name, electrolyte fractions and grams per tsp) is turned into compact JSON, compressed, and base64url-encoded after the `#`, so it never reaches the server. Prices are left out. |
-| SH2 | The link is sent with the share sheet (Messages, WhatsApp, email), or copied to the clipboard where sharing isn't available. Target length: under 1,500 characters for a typical recipe. |
-| SH3 | **Receive:** opening the link shows a preview (ingredients, grams per serving, electrolytes) and **Add to my recipes**. Each ingredient is matched to an existing one by name (ignoring case). Unmatched ingredients are created without a price. If a recipe with the same name exists, the user chooses **Replace** or **Keep both** ("Lemon (2)"). |
-| SH4 | Someone without the app can use a shared recipe right away in the browser. As in next5, **Copy for the LMNT Calculator app** lets an iPhone user move it into the installed app, which keeps its own storage. |
-| SH5 | Each link includes a format version so future versions can still read old links. Invalid or damaged links show a friendly error, never a crash. |
+| SH1–SH5 | ~~Recipe links carrying the recipe data (`#r=...`), the Receive screen, Add to my recipes, Copy for the app, and versioned links.~~ *Replaced 2026-11-07 by the row below.* |
+| SH | **Share recipe** sends a link to the recipe's own page, `https://mattbat.com/lmnt-calculator/#/recipe/<id>`, with the share sheet (Messages, WhatsApp, email), or copies it to the clipboard where sharing isn't available. Opening it shows the D1 notice the first time, then that recipe's calculator. The link holds no data and no prices. Old `#r=` links just open the Recipes screen. |
 
 ## 12. Units
 
 | ID | Requirement |
 |----|-------------|
 | U1 | The weight display switches between **grams** and **ounces** (1 oz = 28.3495 g). Amounts are always stored in grams. |
-| U2 | **Teaspoon view:** where an ingredient has a grams-per-tsp value, show an approximate volume rounded to a kitchen-friendly fraction (⅛ tsp at the smallest). Clearly labeled *approximate: powders vary in density, so weigh when you can* (from LMNT's own advice). Ingredients without a value show "weigh only". |
-| U3 | **Measure helper:** "Level off 1 tsp, put it on the scale, enter the weight" sets an ingredient's grams per tsp. |
-| U4 | Package sizes can be entered in g, kg, oz or lb and are converted to grams. |
+| U2 | ~~Teaspoon view with approximate volumes.~~ *Dropped 2026-11-07.* |
+| U3 | ~~Measure helper for grams per teaspoon.~~ *Dropped 2026-11-07.* |
+| U4 | Package sizes are built in, stored in grams, and shown in the chosen weight unit. (Entering them in other units went with the ingredient editor, 2026-11-07.) |
 | U5 | The suggested water per serving is shown as **16–32 oz (about 0.5–1 L)**. |
 
 ## 13. Backup
 
 | ID | Requirement |
 |----|-------------|
-| B1 | **Back up** exports everything (ingredients, recipes, batch log, settings) to one JSON file through the share sheet, or downloads it where sharing isn't available. Uses next5's `shareFile`. |
+| B1 | **Back up** exports the batch log and settings (recipes and ingredients are built in, so they are not included; backup format 2) to one JSON file through the share sheet, or downloads it where sharing isn't available. Uses next5's `shareFile`. Format 1 files (which also held recipes and ingredients) still restore: their batches and settings are restored and the rest is ignored. |
 | B2 | **Restore** from a backup file: **Replace all** or **Merge** (match by ID; the newer `updatedAt` wins). Restore always shows a summary and asks to confirm. |
-| B3 | Reminder when the log has entries and there's been no backup in 60 days. |
+| B3 | Reminder when the log has entries and there's been no backup in 60 days. **Back up now** goes to Settings; **Not now** hides the reminder for 30 days (added 2026-11-07). |
 | B4 | Backups have a format version and are migrated when restored into a newer app. |
 
 > Data is lost if the app is removed from the home screen or the browser's site data is cleared. This is why B1–B3 matter.
@@ -212,7 +212,7 @@ Navigation: a bottom tab bar with **Recipes · Log · Ingredients · More** (Set
 - Mixing mode is designed for one hand, possibly with powder on your fingers: tap targets of at least 56 pt, the main button within thumb reach, and no swipe gestures needed.
 - Grams use tabular figures so columns line up.
 - Respects safe areas and uses `viewport-fit=cover`. No accidental zoom or pull-to-refresh in mixing mode.
-- Destructive actions (delete recipe, delete log entry, Replace all) ask for confirmation.
+- Destructive actions (delete log entry, Replace all) ask for confirmation.
 - Accessibility: Dynamic Type, screen-reader labels, and contrast at least WCAG AA in both themes.
 - A designed home-screen icon and splash screen. Mockups of the Calculator and Mixing mode are reviewed before the full build.
 
@@ -221,7 +221,7 @@ Navigation: a bottom tab bar with **Recipes · Log · Ingredients · More** (Set
 | ID | Requirement |
 |----|-------------|
 | N1 | Opens to a usable screen in under 2 seconds, offline. |
-| N2 | Every change is saved immediately. There's no Save button except in the recipe editor. |
+| N2 | Every change is saved immediately. There are no Save buttons. |
 | N3 | No analytics, tracking, or network calls other than app updates. |
 | N4 | The whole app (JS + CSS) is under 250 KB gzipped, not counting icons. |
 
@@ -231,8 +231,8 @@ Navigation: a bottom tab bar with **Recipes · Log · Ingredients · More** (Set
 |----|-------------|
 | Q-1 | Every change passes `npm run check` (lint, type-check, unit tests with coverage, build, e2e) before it's committed. |
 | Q-2 | **Calculator (`src/calc`):** example tests that reproduce the spreadsheet's numbers for all three recipes (grams, cost and $/g), plus property tests (fast-check) showing that scaling is linear, totals equal the sum of the lines, display rounding never changes cost, the vial / serving / weight modes agree, and electrolyte math matches the fractions. |
-| Q-3 | Unit and component tests for the share-link round trip (encode → decode → same recipe), invalid links, backup and restore (replace and merge), migrations, and unit conversion. |
-| Q-4 | Playwright e2e at iPhone size (WebKit) and Android size (Chromium): open a recipe → set 30 servings → mix → log with notes → Make again; share a link → open it in a new context → add the recipe; back up → clear → restore; launch offline. |
+| Q-3 | Unit and component tests for the share link (the recipe page URL), backup and restore (replace and merge, format 1 and 2), migrations (including Dexie v1 to v2), and unit conversion. |
+| Q-4 | Playwright e2e at iPhone size (WebKit) and Android size (Chromium): open a recipe → set 30 servings → mix → log with notes → Make again; share a link → open it in a new context → see the recipe; Ingredients is read-only; back up → clear → restore; launch offline. |
 | Q-5 | Coverage: 95% lines for `src/calc` and 80% overall. The build fails below these. |
 | Q-6 | GitHub Actions on every push and PR. Deploying to Pages happens only from `main`, after every job passes (copy next5's `ci.yml`). |
 
@@ -242,8 +242,8 @@ Navigation: a bottom tab bar with **Recipes · Log · Ingredients · More** (Set
 |----|-------------|
 | H-1 | **README for users:** what the app is, the credit and disclaimer, how to install it on iPhone and Android, a quick start (make a batch), sharing, and backups. |
 | H-2 | **README for developers:** stack, layout, local setup, tests, deployment, the share-link format, and the calculation formulas. |
-| H-3 | Empty states that explain what to do next (an empty log, a recipe with no ingredients). |
-| H-4 | An ⓘ next to electrolyte fractions, scale precision, grams per tsp, and the comparison price. |
+| H-3 | Empty states that explain what to do next (an empty log). |
+| H-4 | An ⓘ next to scale precision and the comparison price (the ones for electrolyte fractions and grams per tsp went with the editors, 2026-11-07). |
 | H-5 | `CLAUDE.md` and `docs/STATUS.md`, as in next5. |
 
 ## 17. Decisions log
@@ -258,6 +258,15 @@ Navigation: a bottom tab bar with **Recipes · Log · Ingredients · More** (Set
 | 2026-11-07 | Default recipes are Raw, Lemon and Watermelon only. |
 | 2026-11-07 | The default retail comparison is $1.50 per stick, editable. |
 | 2026-11-07 | The equipment page is a placeholder until Matt sends the list. |
+| 2026-11-07 | **Direction change after the first phone test: the app is read-only with built-in recipes.** Recipes and ingredient prices come from `src/calc/defaults.ts`, so an app update changes them everywhere. Dexie `version(2)` drops the recipes and ingredients tables. |
+| 2026-11-07 | Removed the recipe editor, **+ New recipe**, duplicate, delete and **Edit recipe** (§9 screen 4). |
+| 2026-11-07 | Removed **Paste recipe link**, the Receive screen and the `#r=` link format (SH1–SH5). **Share recipe** now sends a link to the recipe's page (§11). |
+| 2026-11-07 | Removed teaspoon amounts, the teaspoon toggle and the Measure helper (U2, U3). |
+| 2026-11-07 | Removed the actual-weight field and the 5% flag in mixing mode (M3). The Mix step no longer says to sift. |
+| 2026-11-07 | Ingredients is a read-only price list; no edit, add or delete (§9 screen 5). Recipe cards no longer show grams per serving. |
+| 2026-11-07 | The calculator shows **Start mixing** directly under the batch size, and a compact **Summary** card replaces the Totals and Electrolytes sections (C5, C6). |
+| 2026-11-07 | The backup reminder gets **Not now**, which hides it for 30 days (B3). Backup format 2 holds batches and settings only. |
+| 2026-11-07 | **Make again** just opens the calculator at that size; the "recipe has changed" choice is gone (L4). |
 
 ## 18. Open questions
 
@@ -275,7 +284,6 @@ Navigation: a bottom tab bar with **Recipes · Log · Ingredients · More** (Set
 ## 19. Risks
 
 - **Screen wake lock on iOS home-screen apps** has been unreliable in the past. next5's `useWakeLock` is the starting point. The fallback is a hint to turn off Auto-Lock while mixing.
-- **Teaspoon amounts are inaccurate**, because powder density varies by brand and humidity. They're labeled as approximate, and the app pushes weighing (U2).
 - **Electrolyte numbers depend on user-entered fractions.** The defaults are documented (§5.1), and sodium for Redmond salt needs checking against the label (Q1).
-- **Share links in some messaging apps** can be cut off or have the `#` part stripped. Keep links short (SH2), and offer sharing a file as a fallback if this turns out to be a problem.
+- **Share links in some messaging apps** can have the `#` part stripped, which would open the Recipes screen instead of the recipe. The link is short, so it is unlikely to be cut off.
 - **iOS storage eviction:** rare for installed PWAs. Backup (§13) is the safeguard.

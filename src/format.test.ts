@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { recipeFragment, formatDate, formatDateTime, mg, money, parseNum, perServing, plain } from './format';
+import { formatDate, formatDateTime, mg, money, parseNum, perServing, plain } from './format';
 
 describe('format helpers', () => {
   it('formats money, milligrams and per-serving weights', () => {
@@ -16,12 +16,6 @@ describe('format helpers', () => {
     expect(parseNum(' 12,5 ')).toBe(12.5);
     expect(parseNum('')).toBeUndefined();
     expect(parseNum('abc')).toBeUndefined();
-  });
-  it('finds the recipe part of a pasted link', () => {
-    expect(recipeFragment('see https://x.test/lmnt-calculator/#r=1pabc_-')).toBe('r=1pabc_-');
-    expect(recipeFragment('#r=1zabc')).toBe('r=1zabc');
-    expect(recipeFragment('r=1zabc')).toBe('r=1zabc');
-    expect(recipeFragment('nothing here')).toBeUndefined();
   });
   it('formats dates', () => {
     expect(formatDate(0)).toMatch(/19/);

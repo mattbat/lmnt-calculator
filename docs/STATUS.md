@@ -4,7 +4,7 @@ Tracks every requirement in [REQUIREMENTS.md](../REQUIREMENTS.md). Update this f
 
 **Legend:** ✅ Done · 🟡 Partial · ⬜ Not started · ➖ Dropped · 📱 Needs checking on a real phone
 
-Last updated: 2026-11-07 (phase 3: all screens, e2e tests and README done; 201 unit tests, 15 e2e runs, `npm run check` green)
+Last updated: 2026-11-07 (after the first phone test: read-only app with built-in recipes, per [docs/PLAN-phone-feedback.md](PLAN-phone-feedback.md); 154 unit tests, 19 e2e runs, `npm run check` green)
 
 ## Platform
 
@@ -14,8 +14,8 @@ Last updated: 2026-11-07 (phase 3: all screens, e2e tests and README done; 201 u
 | T2 | 🟡 | Build is ready for `/lmnt-calculator/`. Needs the GitHub repo `lmnt-calculator`, Pages enabled, and the link added in `mattbat.github.io`. |
 | T3 | ✅ | Vite `base`, manifest `start_url`/`scope`, `navigateFallback` and Playwright `baseURL` all use `/lmnt-calculator/`; hash routes. |
 | T4 | ✅ | Service worker precaches the app; e2e launches offline (Chromium). |
-| T5 | ✅ | Dexie storage; `navigator.storage.persist()` is requested on launch. |
-| T6 | ✅ | Versioned Dexie schema (`src/data/db.ts`) with a test. |
+| T5 | ✅ | Dexie storage for the batch log and settings; `navigator.storage.persist()` is requested on launch. Recipes and ingredients are built into the code (`src/calc/defaults.ts`). |
+| T6 | ✅ | Versioned Dexie schema (`src/data/db.ts`): `version(2)` drops the recipes and ingredients tables, with a migration test from a real v1 database. |
 | T7 | ✅ | Update banner is manual ("Update" / "Later") and hidden on `#/mix/...`. |
 | T8 | ✅ | `pwaUpdate`, `UpdateBanner`, `InstallHint`, `useWakeLock`, `share.ts`, backup, error banner and Diagnostics (in Settings) are all used. |
 | T9 | 🟡 📱 | Designed and e2e-tested at 402 and 412 pt wide; real devices not yet tried. |
@@ -26,21 +26,21 @@ Last updated: 2026-11-07 (phase 3: all screens, e2e tests and README done; 201 u
 |----|--------|-------|
 | C1–C3 | ✅ | Servings / Vials / Weight segmented control (leftover shown for weight). Component tests for each. |
 | C4 | ✅ | Batch weight rounded to precision for display, plus per-serving weight; cost uses unrounded values. |
-| C5 | ✅ | Batch weight, fill per vial, cost per batch and serving, savings per serving and batch. Vials shown rounded up with the last, partial vial noted. |
-| C6 | ✅ | mg per serving and % daily value for sodium and potassium. |
+| C5 | ✅ | Compact Summary card: batch weight, vials × fill and batch cost in a row; cost per serving and savings (per serving and per batch) vs retail; the last, partial vial noted. |
+| C6 | ✅ | mg per serving as chips in the Summary card, with % daily value for sodium and potassium. |
 | C7 | ✅ | "Low precision" chip on the calculator and in mixing mode. |
 | C8 | ✅ | Live recalculation; last batch size remembered per recipe (`lastBatchSize`). |
-| C9 | ✅ | All maths in `src/calc` (new small helpers `vialPlan`, `pricePerGram`, `weightDeviation` added there). |
+| C9 | ✅ | All maths in `src/calc` (small helpers `vialPlan` and `pricePerGram` live there too). |
 
 ## Mixing mode (§7)
 
 | ID | Status | Notes |
 |----|--------|-------|
-| M1 | ✅ | One ingredient at a time in large type, with a tare reminder. |
+| M1 | ✅ | One ingredient at a time in large type, with a tare reminder. **Start mixing** sits directly under the batch size (e2e checks it is on screen without scrolling). |
 | M2 | ✅ | Done → next; progress strip of 56 px chips, tap to jump back; Back button. |
-| M3 | ✅ | Optional actual weight (in the chosen unit), flagged when more than 5% off; recorded in the log. |
+| M3 | ➖ | Dropped 2026-11-07 (actual weight and the 5% flag removed). Old entries that have actual weights still show them. |
 | M4 | ✅ | Base largest first, then flavor smallest first. "Weigh later" lets you postpone the current ingredient (swap with the next). |
-| M5 | ✅ | Mix step, then Fill step ("Fill V vials with X g each", partial last vial, leftover). |
+| M5 | ✅ | Mix step ("Combine and mix thoroughly. Break up any clumps."), then Fill step ("Fill V vials with X g each", partial last vial, leftover). |
 | M6 | 📱 | Wake lock via `useWakeLock` (hint shown if not held); progress saved in localStorage (`lmnt-calculator.mix.<recipeId>`, with a session id) and resumed after reload (tested). Wake lock on a real iPhone Home Screen app needs a phone check. |
 | M7 | ✅ | Finish logs the batch then shows a notes field; Cancel asks to confirm. |
 | M8 | ✅ | Tips card shown once; also in Help. |
@@ -49,73 +49,71 @@ Last updated: 2026-11-07 (phase 3: all screens, e2e tests and README done; 201 u
 
 | ID | Status | Notes |
 |----|--------|-------|
-| L1 | ✅ | Snapshot, servings, vials, fill, targets and actuals, cost, notes (tested that recipe edits don't change history). |
+| L1 | ✅ | Snapshot, servings, vials, fill, targets, cost and notes. Old entries may carry actual weights, which still display. |
 | L2 | ✅ | Newest first, filter by recipe, first line of notes. |
 | L3 | ✅ | Notes editable any time (button and on blur). |
-| L4 | ✅ | Make again opens the calculator at that size. If the recipe changed (or was deleted) you choose the current version or "as it was then" (added as a copy, e.g. "Lemon (2)"). |
+| L4 | ✅ | Simplified: Make again opens the calculator at that size. If the recipe no longer exists in the app, the entry still shows its snapshot and Make again is hidden. |
 | L5 | ✅ | Delete with confirmation; "Log a batch by hand". |
 | L6 | ✅ | Optional 1–5 stars. |
 
 ## Screens (§9)
 
-Recipes, Calculator, Mixing mode, Recipe editor (add/remove/reorder lines, pick or create ingredients, live totals, duplicate, delete), Ingredients (package size in g/kg/oz/lb, price, buy link, electrolyte %, grams per tsp with Measure helper, price per gram, "Price not set" flag), Log, Log entry, Receive recipe, Settings, About (with Equipment placeholder) and Help are all built. Bottom tabs: Recipes · Log · Ingredients · More. ✅
+Recipes (cards with name, cost per serving and electrolytes only), Calculator (Start mixing and Share under the batch size, Weigh out, Summary card), Mixing mode, Ingredients (read-only: name, package size, price, price per gram, buy link if any), Log, Log entry, Settings, About (with Equipment placeholder) and Help are all built. Bottom tabs: Recipes · Log · Ingredients · More. ✅ Dropped 2026-11-07: Recipe editor, Receive recipe, ingredient editing (➖).
 
 ## Disclaimer and credit (§10)
 
 | ID | Status | Notes |
 |----|--------|-------|
 | D1 | ✅ | First-launch notice gates the app until acknowledged (`settings.disclaimerAcceptedAt`). |
-| D2 | ✅ | Footer on Recipes, Calculator, Mixing, Editor, Receive and Log entry; links to About. |
+| D2 | ✅ | Footer on Recipes, Calculator, Mixing and Log entry; links to About. |
 | D3 | ✅ | Full text under More → About, with credit link to LMNT's article. |
 | D4 | ✅ | Own icon, colors and type. The icon is still the placeholder from phase 1. |
-| D5 | ✅ | Receive screen shows the footer and a link to the safety notice (and the notice gate runs first for anyone who hasn't seen it). |
+| D5 | ✅ | A shared link opens the recipe's calculator, which has the footer; the notice gate runs first for anyone who hasn't seen it (e2e covers this). |
 
 ## Sharing (§11)
 
 | ID | Status | Notes |
 |----|--------|-------|
-| SH1, SH2 | ✅ | Share recipe sheet shows the link, with **Share link** (share sheet) and **Copy link** (clipboard). Typical link well under 1,500 characters. |
-| SH3 | ✅ | Receive screen: preview, Add to my recipes / Replace / Keep both; unmatched ingredients created without a price and flagged. |
-| SH4 | 📱 | **Copy for the LMNT Calculator app** plus **Paste recipe link** on Recipes. The browser to installed-app hand-off needs a phone check. |
-| SH5 | ✅ | Versioned links; damaged links give a friendly error. |
+| SH1–SH5 | ➖ | Dropped 2026-11-07: recipe data links, Receive screen, Add to my recipes, Copy for the app, and versioned links are gone. Old `#r=` links just open Recipes. |
+| SH (new) | ✅ 📱 | **Share recipe** sends `.../lmnt-calculator/#/recipe/<id>` through the share sheet (clipboard where unavailable). e2e: the shared URL ends `#/recipe/watermelon` and opens the disclaimer then the Watermelon calculator in a fresh context. Real-phone share sheet still to be checked. |
 
 ## Units (§12)
 
 | ID | Status | Notes |
 |----|--------|-------|
 | U1 | ✅ | g / oz toggle on the calculator and in Settings. |
-| U2 | ✅ | Teaspoon view labelled approximate; "weigh only" where unknown. |
-| U3 | ✅ | Measure helper in the ingredient editor. |
-| U4 | ✅ | Package size in g, kg, oz or lb. |
+| U2 | ➖ | Dropped 2026-11-07 (teaspoon view). |
+| U3 | ➖ | Dropped 2026-11-07 (Measure helper). |
+| U4 | ✅ | Simplified: package sizes are built in (grams) and shown in the chosen unit on Ingredients. Entering sizes in other units went with the editor. |
 | U5 | ✅ | "16–32 oz (about 0.5–1 L)" shown on the calculator. |
 
 ## Backup (§13)
 
 | ID | Status | Notes |
 |----|--------|-------|
-| B1 | ✅ | Back up now (share sheet, or download). |
-| B2 | ✅ | Restore shows a summary; Merge, or Replace all with a second confirmation. |
-| B3 | ✅ | Reminder banner on Recipes, Log and Settings. |
-| B4 | ✅ | Format version and migration hook. |
+| B1 | ✅ | Back up now (share sheet, or download). Format 2 holds batches and settings only. |
+| B2 | ✅ | Restore shows a summary; Merge, or Replace all with a second confirmation. Format 1 files still restore (recipes and ingredients in them are ignored). |
+| B3 | ✅ | Reminder banner on Recipes with **Back up now** and **Not now** (snoozes 30 days; unit and e2e tests). |
+| B4 | ✅ | Format version and migration hook (1 to 2 migration tested). |
 
 ## Non-functional (§15)
 
 | ID | Status | Notes |
 |----|--------|-------|
 | N1 | 📱 | Small bundle and offline precache; timing not measured on a phone. |
-| N2 | ✅ | Every change saves immediately; the recipe editor has the only Save button. |
+| N2 | ✅ | Every change saves immediately; there are no Save buttons. |
 | N3 | ✅ | No analytics; no network calls other than update checks. |
-| N4 | ✅ | About 126 KB JS + 3 KB CSS gzipped (limit 250 KB). |
+| N4 | ✅ | About 118 KB JS + 3 KB CSS gzipped (limit 250 KB). |
 
 ## Testing and CI (§15)
 
 | ID | Status | Notes |
 |----|--------|-------|
-| Q-1 | ✅ | `npm run check` passes: lint, types, 201 unit/component tests, build, 15 Playwright runs. |
+| Q-1 | ✅ | `npm run check` passes: lint, types, 154 unit/component tests, build, 19 Playwright runs. |
 | Q-2 | ✅ | Calc example and property tests. |
-| Q-3 | ✅ | Link round trip, backup/restore, migrations, unit conversion, plus screen tests. |
-| Q-4 | ✅ | e2e on iPhone WebKit and Android Chromium: batch to log to Make again; share link to a fresh context; backup, clear, restore; price edit updates cost; offline launch. |
-| Q-5 | ✅ | Coverage about 97% lines overall, 99% for `src/calc`; thresholds enforced. |
+| Q-3 | ✅ | Share URL, backup/restore (format 1 and 2), Dexie v1 to v2 migration, unit conversion, plus screen tests. |
+| Q-4 | ✅ | e2e on iPhone WebKit and Android Chromium: batch to log to Make again (Start mixing on screen at load); share link to a fresh context; backup, clear, restore; Ingredients read-only; old `#r=` link; backup banner Not now; offline launch. |
+| Q-5 | ✅ | Coverage about 98% lines overall, 100% for `src/calc`; thresholds enforced. |
 | Q-6 | 🟡 | CI workflow written (deploy only from `main`), not yet run on GitHub. |
 
 ## Design (§14) and documentation (§16)
@@ -126,9 +124,9 @@ Recipes, Calculator, Mixing mode, Recipe editor (add/remove/reorder lines, pick 
 | Tap targets | ✅ | 44 px or more everywhere; 56 px or more in mixing mode. |
 | Safe areas, no zoom | ✅ | `viewport-fit=cover`, safe-area padding. |
 | Splash screen, final icon | 🟡 | Placeholder icon only. |
-| H-1 | ✅ | User README. |
-| H-2 | ✅ | Developer README (stack, layout, setup, CI/CD, share-link format, formulas). |
-| H-3 | ✅ | Empty states for recipes, log, ingredients, and recipes with no lines. |
-| H-4 | ✅ | ⓘ on electrolyte fractions, scale precision, grams per tsp, comparison price and grams per serving. |
+| H-1 | ✅ | User README (read-only built-in recipes, sharing a link, Not now). |
+| H-2 | ✅ | Developer README (stack, layout, setup, CI/CD, share link, backup format 2, formulas). |
+| H-3 | ✅ | Empty states for the log and the built-in lists. |
+| H-4 | ✅ | ⓘ on scale precision and the comparison price (the electrolyte, grams per tsp and grams per serving ones went with the editors). |
 | H-5 | ✅ | `CLAUDE.md` and this file. |
 | Equipment page | 🟡 | Placeholder in About ("Coming soon: the scale, vials and tools I use"); waiting for Matt's list. |

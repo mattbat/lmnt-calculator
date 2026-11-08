@@ -2,14 +2,13 @@ import { useMemo, useState } from 'react';
 import {
   calculateBatch,
   formatWeight,
-  gramsPerServing,
   gramsToOunces,
   ouncesToGrams,
   roundToPrecision,
   vialPlan,
 } from '../calc';
 import { Chip, Footer, Info, Loading, NumField, Section, Segmented, TopBar } from '../components/ui';
-import { ShareSheet } from '../components/ShareSheet';
+import { recipePageUrl, shareLink } from '../data/share';
 import { setLastBatchSize, updateSettings, useIngredients, useRecipe, useSettings } from '../data/repo';
 import { mg, money, perServing } from '../format';
 import { clearMixSession, hasMixSession } from '../mixSession';
@@ -38,7 +37,7 @@ function CalculatorBody({
   const [size, setSize] = useState<BatchSize>(
     () => settings.lastBatchSize[recipe.id] ?? { mode: 'servings', servings: settings.defaultServings },
   );
-  const [sharing, setSharing] = useState(false);
+  const [shareMessage, setShareMessage] = useState('');
   const unit = settings.weightUnit;
   const precision = settings.scalePrecision;
 
@@ -73,6 +72,13 @@ function CalculatorBody({
     navigate(paths.mix(recipe.id));
   };
 
+  const share = async () => {
+    const outcome = await shareLink(recipePageUrl(recipe.id), `${recipe.name} electrolyte mix`, `${recipe.name} on LMNT Calculator`);
+    setShareMessage(
+      outcome === 'copied' ? 'Link copied.' : outcome === 'failed' ? 'Could not share the link.' : outcome === 'shared' ? 'Shared.' : '',
+    );
+  };
+
   const resumable = hasMixSession(recipe.id);
   const fmt = (grams: number) => formatWeight(grams, unit, precision);
 
@@ -80,7 +86,7 @@ function CalculatorBody({
     <main className="screen">
       <TopBar title={recipe.name} back={paths.recipes()} backLabel="Back to recipes" color={recipe.color} />
       <p className="muted">
-        {perServing(gramsPerServing(recipe), unit)} per serving · mix one into 16–32 oz (about 0.5–1 L) of water
+        Mix one serving into 16–32 oz (about 0.5–1 L) of water
       </p>
 
       <Section title="Batch size">
@@ -116,6 +122,27 @@ function CalculatorBody({
         </p>
       </Section>
 
+      <div className="actions start-actions">
+        <button type="button" className="btn big" onClick={() => void startMixing(!resumable)} disabled={result.lines.length === 0 || result.servings <= 0}>
+          {resumable ? 'Resume mixing' : 'Start mixing'}
+        </button>
+        <div className="actions row">
+          {resumable && (
+            <button type="button" className="btn ghost small" onClick={() => void startMixing(true)}>
+              Start over
+            </button>
+          )}
+          <button type="button" className="btn ghost small" onClick={() => void share()}>
+            Share recipe
+          </button>
+        </div>
+        {shareMessage && (
+          <p className="hint" role="status">
+            {shareMessage}
+          </p>
+        )}
+      </div>
+
       <Section
         title="Weigh out"
         aside={
@@ -132,12 +159,11 @@ function CalculatorBody({
       >
         {result.missingIngredientIds.length > 0 && (
           <p className="form-error" role="alert">
-            This recipe uses {result.missingIngredientIds.length} ingredient(s) that no longer exist. Edit the recipe to
-            fix it.
+            This recipe uses {result.missingIngredientIds.length} ingredient(s) that no longer exist.
           </p>
         )}
         {result.lines.length === 0 ? (
-          <p className="muted">This recipe has no ingredients yet. Edit it to add some.</p>
+          <p className="muted">This recipe has no ingredients.</p>
         ) : (
           <ul className="lines">
             {result.lines.map((line) => (
@@ -150,12 +176,6 @@ function CalculatorBody({
                 </div>
                 <div className="line-sub">
                   <span className="num">{perServing(line.gramsPerServing, unit)}</span> per serving
-                  {settings.showTeaspoons && (
-                    <>
-                      {' · '}
-                      <span>{line.teaspoons ? `${line.teaspoons} (approximate)` : 'weigh only'}</span>
-                    </>
-                  )}
                 </div>
                 {line.lowPrecision && (
                   <Chip>Low precision: use a bigger batch or a finer scale (rounding could be off by over 5%)</Chip>
@@ -164,47 +184,43 @@ function CalculatorBody({
             ))}
           </ul>
         )}
-        <label className="switch-row">
-          <input
-            type="checkbox"
-            role="switch"
-            checked={settings.showTeaspoons}
-            onChange={(e) => void updateSettings({ showTeaspoons: e.target.checked })}
-          />
-          <span>Show approximate teaspoons</span>
-        </label>
-        {settings.showTeaspoons && (
-          <p className="hint">Approximate: powders vary in density, so weigh when you can.</p>
-        )}
       </Section>
 
-      <Section title="Totals">
-        <dl className="stats">
+      <section className="summary-card" aria-label="Summary">
+        <h2>Summary</h2>
+        <dl className="triple">
           <div>
-            <dt>Batch weight</dt>
             <dd className="num">{fmt(result.totalGrams)}</dd>
+            <dt>batch</dt>
           </div>
           <div>
-            <dt>Fill per vial</dt>
-            <dd className="num">{fmt(result.fillGramsPerVial)}</dd>
+            <dd className="num">
+              {plan.totalVials} × {fmt(result.fillGramsPerVial)}
+            </dd>
+            <dt>{plan.totalVials === 1 ? 'vial' : 'vials'}</dt>
           </div>
           <div>
-            <dt>Cost per batch</dt>
             <dd className="num">{money(result.costPerBatch)}</dd>
-          </div>
-          <div>
-            <dt>Cost per serving</dt>
-            <dd className="num">{money(result.costPerServing)}</dd>
-          </div>
-          <div>
-            <dt>Saved per serving</dt>
-            <dd className="num">{money(result.savingsPerServing)}</dd>
-          </div>
-          <div>
-            <dt>Saved per batch</dt>
-            <dd className="num">{money(result.savingsPerBatch)}</dd>
+            <dt>batch</dt>
           </div>
         </dl>
+        <p className="summary-row">
+          <strong className="num">{money(result.costPerServing)}</strong> / serving · save{' '}
+          <strong className="num">{money(result.savingsPerServing)}</strong> a serving (
+          <span className="num">{money(result.savingsPerBatch)}</span> a batch) vs{' '}
+          {money(settings.retailPricePerServing)} retail
+          <Info label="comparison price">Change the retail price per stick in Settings.</Info>
+        </p>
+        <p className="chips">
+          <Chip tone="info">
+            Na {mg(result.minerals.sodium)} · {Math.round(result.dailyValue.sodium)}%
+          </Chip>
+          <Chip tone="info">
+            K {mg(result.minerals.potassium)} · {Math.round(result.dailyValue.potassium)}%
+          </Chip>
+          <Chip tone="info">Mg {mg(result.minerals.magnesium)}</Chip>
+        </p>
+        <p className="hint">Per serving: sodium and potassium show the percent of the daily value.</p>
         {plan.partialServings > 0 && (
           <p className="hint">
             {plan.totalVials - 1} full {plan.totalVials - 1 === 1 ? 'vial' : 'vials'}, plus a last vial with{' '}
@@ -212,51 +228,9 @@ function CalculatorBody({
             {fmt(plan.partialGrams)}).
           </p>
         )}
-        <p className="hint">
-          Savings compare with ${settings.retailPricePerServing.toFixed(2)} per stick.
-          <Info label="comparison price">Change the retail price per stick in Settings.</Info>
-        </p>
-      </Section>
+      </section>
 
-      <Section title="Electrolytes per serving">
-        <dl className="stats">
-          <div>
-            <dt>Sodium</dt>
-            <dd className="num">{mg(result.minerals.sodium)}</dd>
-            <dd className="hint">{Math.round(result.dailyValue.sodium)}% daily value</dd>
-          </div>
-          <div>
-            <dt>Potassium</dt>
-            <dd className="num">{mg(result.minerals.potassium)}</dd>
-            <dd className="hint">{Math.round(result.dailyValue.potassium)}% daily value</dd>
-          </div>
-          <div>
-            <dt>Magnesium</dt>
-            <dd className="num">{mg(result.minerals.magnesium)}</dd>
-          </div>
-        </dl>
-      </Section>
-
-      <div className="actions">
-        <button type="button" className="btn big" onClick={() => void startMixing(!resumable)} disabled={result.lines.length === 0 || result.servings <= 0}>
-          {resumable ? 'Resume mixing' : 'Start mixing'}
-        </button>
-        {resumable && (
-          <button type="button" className="btn ghost" onClick={() => void startMixing(true)}>
-            Start over
-          </button>
-        )}
-        <div className="actions row">
-          <button type="button" className="btn ghost" onClick={() => setSharing(true)}>
-            Share recipe
-          </button>
-          <a className="btn ghost" href={paths.recipeEdit(recipe.id)}>
-            Edit recipe
-          </a>
-        </div>
-      </div>
       <Footer />
-      {sharing && <ShareSheet recipe={recipe} ingredients={ingredients} onClose={() => setSharing(false)} />}
     </main>
   );
 }
@@ -267,12 +241,16 @@ export function CalculatorScreen({ id }: { id: string }) {
   const ingredients = useIngredients();
   const settings = useSettings();
   if (!recipe || !ingredients || !settings) {
-    // useRecipe gives undefined both while loading and when missing; the live query settles quickly.
     return (
       <main className="screen">
         <TopBar title="Recipe" back={paths.recipes()} />
-        <Loading />
-        <p className="hint">If this doesn't load, the recipe may have been deleted. <a href={paths.recipes()}>Back to recipes</a></p>
+        {settings ? (
+          <p className="hint">
+            There is no recipe with that link. <a href={paths.recipes()}>Back to recipes</a>
+          </p>
+        ) : (
+          <Loading />
+        )}
       </main>
     );
   }

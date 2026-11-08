@@ -7,7 +7,6 @@ const session: MixSession = {
   size: { mode: 'servings', servings: 30 },
   order: ['a', 'b'],
   step: 1,
-  actuals: { a: 2 },
   startedAt: 1,
 };
 

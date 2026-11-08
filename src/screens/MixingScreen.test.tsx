@@ -43,7 +43,7 @@ describe('Mixing mode', () => {
       await next(user);
     }
     expect(screen.getByRole('heading', { name: 'Mix' })).toBeInTheDocument();
-    expect(screen.getByText(/Combine everything and mix thoroughly/)).toBeInTheDocument();
+    expect(screen.getByText(/Combine and mix thoroughly. Break up any clumps/)).toBeInTheDocument();
     await next(user);
     expect(screen.getByRole('heading', { name: 'Fill' })).toBeInTheDocument();
     expect(screen.getByText(/Fill/, { selector: 'p' })).toHaveTextContent('Fill 30 vials with 5.30 g each');
@@ -60,14 +60,12 @@ describe('Mixing mode', () => {
     expect(screen.getByRole('heading', { name: 'Redmond Real Salt' })).toBeInTheDocument();
   });
 
-  it('flags an actual weight more than 5% off (M3)', async () => {
+  it('has no actual-weight field or off-target flag', async () => {
     const { user } = await start();
-    const actual = screen.getByLabelText(/Actual weight/);
-    await user.type(actual, '76');
+    expect(screen.queryByLabelText(/Actual weight/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/teaspoon|tsp/i)).not.toBeInTheDocument();
+    await next(user);
     expect(screen.queryByText(/away from the target/)).not.toBeInTheDocument();
-    await user.clear(actual);
-    await user.type(actual, '80');
-    expect(screen.getByText(/7% away from the target/)).toBeInTheDocument();
   });
 
   it('lets the current ingredient wait until later (M4)', async () => {
@@ -81,14 +79,13 @@ describe('Mixing mode', () => {
 
   it('resumes on the same step after a reload (M6)', async () => {
     const { user, unmount } = await start();
-    await user.type(screen.getByLabelText(/Actual weight/), '75.2');
     await next(user);
     await next(user);
     unmount();
     render(<MixingScreen id="watermelon" />);
     expect(await screen.findByRole('heading', { name: 'Potassium chloride' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Step 1 of 8/ }));
-    expect(screen.getByLabelText(/Actual weight/)).toHaveValue('75.2');
+    expect(screen.getByRole('heading', { name: 'Redmond Real Salt' })).toBeInTheDocument();
   });
 
   it('keeps the screen awake and says so (M6)', async () => {
@@ -111,15 +108,15 @@ describe('Mixing mode', () => {
     expect(screen.queryByText(/desiccant pack/)).not.toBeInTheDocument();
   });
 
-  it('finishes into the log with actual weights, then saves notes (M5, M7)', async () => {
+  it('finishes into the log, then saves notes (M5, M7)', async () => {
     const { user } = await start();
-    await user.type(screen.getByLabelText(/Actual weight/), '75.1');
     for (let i = 0; i < 7; i++) await next(user);
     await user.click(screen.getByRole('button', { name: 'Finish' }));
     expect(await screen.findByRole('heading', { name: 'Batch logged' })).toBeInTheDocument();
     const [batch] = await db.batches.toArray();
     expect(batch).toMatchObject({ recipeId: 'watermelon', servings: 30, vials: 30, notes: '' });
-    expect(batch!.lines[0]).toMatchObject({ ingredientId: 'salt', targetGrams: 75, actualGrams: 75.1 });
+    expect(batch!.lines[0]).toMatchObject({ ingredientId: 'salt', targetGrams: 75 });
+    expect(batch!.lines[0]).not.toHaveProperty('actualGrams');
     expect(batch!.lines).toHaveLength(6);
     expect(batch!.totalCost).toBeCloseTo(7.41, 1);
     expect(loadMixSession('watermelon')).toBeUndefined();

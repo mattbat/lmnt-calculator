@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pricePerGram, vialPlan, weightDeviation } from './display';
+import { pricePerGram, vialPlan } from './display';
 
 describe('vialPlan', () => {
   it('rounds vials up and notes the partial last vial', () => {
@@ -18,14 +18,9 @@ describe('vialPlan', () => {
   });
 });
 
-describe('pricePerGram and weightDeviation', () => {
+describe('pricePerGram', () => {
   it('divides price by package size', () => {
     expect(pricePerGram({ packageGrams: 250, packagePrice: 20 })).toBeCloseTo(0.08);
     expect(pricePerGram({ packageGrams: 0, packagePrice: 20 })).toBe(0);
-  });
-  it('measures distance from target', () => {
-    expect(weightDeviation(105, 100)).toBeCloseTo(0.05);
-    expect(weightDeviation(90, 100)).toBeCloseTo(0.1);
-    expect(weightDeviation(5, 0)).toBe(0);
   });
 });

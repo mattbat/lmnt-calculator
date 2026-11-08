@@ -1,5 +1,7 @@
 # Build plan
 
+> Historical. The v1 build below was changed after the first phone test: recipes and ingredients are now built in and read-only. See [PLAN-phone-feedback.md](PLAN-phone-feedback.md) and the decisions log in REQUIREMENTS.md.
+
 How v1 is built from `REQUIREMENTS.md`. Each phase is done by one agent; phase 2's two parts run in parallel and touch separate folders. Every phase ends with `npm run check` passing.
 
 ## Phase 1: scaffold, CI/CD, test harness

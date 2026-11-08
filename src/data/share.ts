@@ -51,3 +51,8 @@ export async function shareLink(url: string, title: string, text: string): Promi
     return 'failed';
   }
 }
+
+/** The page for one built-in recipe: `<origin>/lmnt-calculator/#/recipe/<id>`. `baseUrl` is the site origin (defaults to this page's). */
+export function recipePageUrl(recipeId: string, baseUrl: string = window.location.origin): string {
+  return `${baseUrl.replace(/\/+$/, '')}/lmnt-calculator/#/recipe/${encodeURIComponent(recipeId)}`;
+}

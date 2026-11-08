@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getSettings, updateSettings } from '../data/repo';
@@ -80,16 +80,6 @@ describe('Calculator screen', () => {
     await vi.waitFor(() => expect(amount('salt')).toHaveTextContent(/ g$/));
   });
 
-  it('shows approximate teaspoons, or "weigh only" (U2)', async () => {
-    const user = userEvent.setup();
-    await open();
-    expect(screen.queryByText(/powders vary in density/)).not.toBeInTheDocument();
-    await user.click(screen.getByRole('switch', { name: 'Show approximate teaspoons' }));
-    expect(await screen.findByText('~15 tsp (approximate)')).toBeInTheDocument();
-    expect(screen.getAllByText('weigh only').length).toBeGreaterThan(0);
-    expect(screen.getByText(/powders vary in density/)).toBeInTheDocument();
-  });
-
   it('warns when a line is below 10x the scale precision (C7)', async () => {
     const user = userEvent.setup();
     await updateSettings({ scalePrecision: 0.1 });
@@ -104,18 +94,33 @@ describe('Calculator screen', () => {
     expect(screen.queryByText(/Low precision/)).not.toBeInTheDocument();
   });
 
-  it('shows totals, electrolytes and savings (C5, C6)', async () => {
+  it('shows a compact summary of totals, savings and electrolytes (C5, C6)', async () => {
     await open();
-    const stat = (label: string) => screen.getByText(label).closest('div')!;
-    expect(stat('Cost per serving')).toHaveTextContent('$0.25');
-    expect(stat('Saved per serving')).toHaveTextContent('$1.25');
-    expect(stat('Saved per batch')).toHaveTextContent('$37.59');
-    expect(stat('Batch weight')).toHaveTextContent('158.85 g');
-    expect(stat('Fill per vial')).toHaveTextContent('5.30 g');
-    expect(stat('Sodium')).toHaveTextContent('950 mg');
-    expect(stat('Sodium')).toHaveTextContent('41% daily value');
-    expect(stat('Potassium')).toHaveTextContent('202 mg');
-    expect(stat('Magnesium')).toHaveTextContent('60 mg');
+    const card = screen.getByRole('region', { name: 'Summary' });
+    expect(card).toHaveTextContent('158.85 g');
+    expect(card).toHaveTextContent('30 × 5.30 g');
+    expect(card).toHaveTextContent('$7.41');
+    expect(card).toHaveTextContent('$0.25 / serving');
+    expect(card).toHaveTextContent('save $1.25 a serving ($37.59 a batch) vs $1.50 retail');
+    expect(card).toHaveTextContent('Na 950 mg · 41%');
+    expect(card).toHaveTextContent('K 202 mg · 4%');
+    expect(card).toHaveTextContent('Mg 60 mg');
+    expect(screen.queryByText('Totals')).not.toBeInTheDocument();
+    expect(screen.queryByText('Electrolytes per serving')).not.toBeInTheDocument();
+  });
+
+  it('puts Start mixing and Share before the Weigh out list', async () => {
+    await open();
+    const start = screen.getByRole('button', { name: 'Start mixing' });
+    const share = screen.getByRole('button', { name: 'Share recipe' });
+    const weigh = screen.getByRole('heading', { name: 'Weigh out' });
+    const batch = screen.getByRole('heading', { name: 'Batch size' });
+    const summary = screen.getByRole('region', { name: 'Summary' });
+    const before = (x: Node, y: Node) => Boolean(x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(before(batch, start)).toBe(true);
+    expect(before(start, weigh)).toBe(true);
+    expect(before(share, weigh)).toBe(true);
+    expect(before(weigh, summary)).toBe(true);
   });
 
   it('rounds vials up and notes the last, partial vial', async () => {
@@ -129,14 +134,17 @@ describe('Calculator screen', () => {
     expect(screen.getByText(/last vial with 2 servings/)).toBeInTheDocument();
   });
 
-  it('starts mixing, links to the editor, and can share', async () => {
+  it('starts mixing and shares a link to the recipe page', async () => {
     const user = userEvent.setup();
+    const share = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', Object.assign(Object.create(navigator), { share }));
     await open();
-    expect(screen.getByRole('link', { name: 'Edit recipe' })).toHaveAttribute('href', '#/recipe/watermelon/edit');
+    expect(screen.queryByRole('link', { name: 'Edit recipe' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: 'Show approximate teaspoons' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Share recipe' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Share recipe' });
-    await vi.waitFor(() => expect((within(dialog).getByLabelText('Recipe link') as HTMLTextAreaElement).value).toContain('#r='));
-    await user.click(within(dialog).getByRole('button', { name: 'Close' }));
+    await vi.waitFor(() => expect(share).toHaveBeenCalled());
+    expect(share.mock.calls[0]![0].url).toBe(`${window.location.origin}/lmnt-calculator/#/recipe/watermelon`);
+    vi.unstubAllGlobals();
     await user.click(screen.getByRole('button', { name: 'Start mixing' }));
     await vi.waitFor(() => expect(window.location.hash).toBe('#/mix/watermelon'));
   });
@@ -149,7 +157,6 @@ describe('Calculator screen', () => {
       size: { mode: 'servings', servings: 30 },
       order: ['salt'],
       step: 0,
-      actuals: {},
       startedAt: 1,
     });
     await open();

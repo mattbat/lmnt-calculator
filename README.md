@@ -1,6 +1,6 @@
 # LMNT Calculator
 
-A phone app for mixing a homemade electrolyte drink powder. Pick a recipe and a batch size, and it tells you exactly how many grams of each ingredient to weigh, walks you through weighing them one at a time, and logs the batch with your notes. It also shows what each serving costs, how much sodium, potassium and magnesium it has, and what you save compared with buying ready-made sticks.
+A phone app for mixing a homemade electrolyte drink powder. Pick one of the built-in recipes and a batch size, and it tells you exactly how many grams of each ingredient to weigh, walks you through weighing them one at a time, and logs the batch with your notes. It also shows what each serving costs, how much sodium, potassium and magnesium it has, and what you save compared with buying ready-made sticks. The recipes and ingredient prices are built in: the app is read-only, and you can't edit or add recipes.
 
 Use it at **https://mattbat.com/lmnt-calculator/**. It works offline once it has loaded, has no accounts or ads, and keeps everything on your device.
 
@@ -29,28 +29,24 @@ Installing is optional, but an installed app keeps its own storage, separate fro
 
 1. On **Recipes**, tap a recipe (Raw, Lemon and Watermelon come built in).
 2. Choose the batch size: **Servings**, **Vials**, or **Weight** of mix. Everything updates instantly.
-3. Check the **Weigh out** list. Switch between grams and ounces; turn on approximate teaspoons if you like.
-4. Tap **Start mixing**. For each ingredient: tare the scale, weigh to the target, tap **Done → next**. You can type the actual weight; more than 5% off gets a gentle flag. The screen stays on, and if the phone locks you resume on the same step.
-5. After the last ingredient, mix well, fill the vials, and tap **Finish**. The batch goes to the **Log**, where you can add notes ("a bit sour; try 0.5 g less malic acid").
+3. **Start mixing** is right under the batch size. Below it, the **Weigh out** list shows how many grams of each ingredient to measure (switch between grams and ounces there), and a **Summary** card shows the batch weight, the vials, the cost, your savings and the electrolytes.
+4. Tap **Start mixing**. For each ingredient: tare the scale, weigh to the target, tap **Done → next**. The screen stays on, and if the phone locks you resume on the same step.
+5. After the last ingredient, mix well (break up any clumps), fill the vials, and tap **Finish**. The batch goes to the **Log**, where you can add notes ("a bit sour; try 0.5 g less malic acid").
 6. Next time, open the entry and tap **Make again**.
 
-Before your first batch, open **Ingredients** and enter the price you paid for each package so cost and savings are right. Ingredients added from a shared recipe show **Price not set** until you do.
+Each serving is meant for 16-32 oz (about 0.5-1 L) of water.
 
-Each serving is meant for 16–32 oz (about 0.5–1 L) of water.
+### Recipes and prices are built in
 
-### Editing recipes
-
-Open a recipe and tap **Edit recipe** to rename it, change its color, add, remove and reorder ingredients, or enter grams per serving. Totals update as you type. You can also duplicate or delete a recipe (batches already in your log are kept).
+The recipes and ingredient prices come with the app and can't be edited. **Ingredients** is a read-only price list (package size, price, price per gram, and a buy link where there is one). When the recipes or prices change, you get them with the next app update; the app asks before it updates.
 
 ### Share a recipe
 
-Open a recipe and tap **Share recipe**. The link carries the recipe and ingredient details but **no prices**, and it never goes to a server (it lives after the `#`). Whoever opens it sees a preview and can **Add to my recipes**. If they already have a recipe with that name, they choose **Replace** or **Keep both**.
-
-If you use the installed app, open the link in the browser, tap **Copy for the LMNT Calculator app**, then use **Recipes → Paste recipe link** in the app.
+Open a recipe and tap **Share recipe**. It sends a link to that recipe's page (or copies the link where sharing isn't available). Whoever opens it sees the safety notice once, then the recipe's calculator. The link holds no data about you and never includes your log.
 
 ### Back up your data
 
-Your data lives only on your device. It is lost if the app is removed or the browser's site data is cleared. Go to **More → Settings → Back up now** and save the file somewhere safe (the share sheet lets you save to Files or send it to yourself). To restore, choose the file under **Backup and restore**, read the summary, and pick **Merge** (keeps the newer copy of each item) or **Replace all**. The app reminds you if you have logged batches and not backed up for 60 days.
+Your data lives only on your device. It is lost if the app is removed or the browser's site data is cleared. Go to **More → Settings → Back up now** and save the file somewhere safe (the share sheet lets you save to Files or send it to yourself). To restore, choose the file under **Backup and restore**, read the summary, and pick **Merge** (keeps the newer copy of each item) or **Replace all**. Only your batch log and settings are backed up; the recipes and prices are part of the app. The app reminds you if you have logged batches and not backed up for 60 days; tap **Not now** to hide the reminder for 30 days.
 
 ---
 
@@ -67,19 +63,22 @@ The requirements are in [REQUIREMENTS.md](REQUIREMENTS.md), the build plan in [d
 ```
 src/
   calc/         pure TypeScript: batch maths, units, defaults, vial plan (no React/Dexie/DOM)
-  data/         db.ts (Dexie schema + seeding), repo.ts (the only write path + hooks),
-                backup.ts, recipeLink.ts (share links), share.ts (share sheet / download)
-  screens/      one file per screen (Recipes, Calculator, Mixing, RecipeEditor, Ingredients,
-                Log, LogEntry, Receive, Settings, More/About/Help)
-  components/   shared UI (sheets, number field, banners, disclaimer gate, ingredient sheet)
+  data/         db.ts (Dexie schema: batches + settings), repo.ts (the only write path + hooks;
+                recipes and ingredients are read from calc/defaults.ts), backup.ts,
+                share.ts (share sheet / download, recipePageUrl)
+  screens/      one file per screen (Recipes, Calculator, Mixing, Ingredients (read-only),
+                Log, LogEntry, Settings, More/About/Help)
+  components/   shared UI (sheets, number field, banners, disclaimer gate)
   hooks/        useWakeLock, useRun
-  router.ts     tiny hash router (#/recipe/<id>, #/mix/<id>, #r=<link>, ...)
+  router.ts     tiny hash router (#/recipe/<id>, #/mix/<id>, ...)
   mixSession.ts mixing progress saved in localStorage (resume after reload)
   types.ts      shared types
 e2e/            Playwright specs
 ```
 
 Rules worth knowing: screens write only through `src/data/repo.ts`; all maths comes from `src/calc`; amounts are stored in grams and converted only for display; every URL uses the `/lmnt-calculator/` base; never edit an existing Dexie `version(n)` (add a new one with a migration).
+
+**Recipes and ingredients are code, not data.** Edit `src/calc/defaults.ts` to change a recipe or a price; the next release carries it to every phone. Dexie `version(2)` dropped the old `recipes` and `ingredients` tables, and `useRecipes()`, `useRecipe(id)` and `useIngredients()` in `repo.ts` return the built-in arrays synchronously.
 
 ### Setup
 
@@ -95,19 +94,13 @@ npm run check      # everything below, in order, stopping at the first failure
 
 `.github/workflows/ci.yml` runs lint, type check, unit tests with coverage, build and e2e on every push and pull request. When all jobs pass on a push to `main`, the build is deployed to GitHub Pages, served at `https://mattbat.com/lmnt-calculator/` through the `mattbat.github.io` custom domain. Hash routing is used because Pages can't fall back to `index.html`. Updates are never applied silently: the service worker waits, and an "update available" banner (hidden during mixing mode) lets the user choose when.
 
-### Share-link format
+### Share link
 
-`<origin>/lmnt-calculator/#r=<payload>`, where the payload is `<version><flag><base64url>`:
-
-- `version`: one character, currently `1`. Newer versions give a "update the app" message; unknown ones a "damaged link" message.
-- `flag`: `z` means the JSON is deflate-compressed (`CompressionStream('deflate-raw')`); `p` means plain (used where compression isn't available).
-- the body is compact JSON: `{ n: name, c: color, t?: notes, i: [{ n, g: 0|1 (base|flavor), m: [sodium, potassium, magnesium] fractions, s?: gramsPerTsp }], l: [[ingredientIndex, gramsPerServing], ...] }`.
-
-Prices and buy links are never included. On import, ingredients are matched by name (case-insensitive); unmatched ones are created with a 100 g package and a price of 0 ("price not set"). A same-named recipe is replaced or kept alongside as "Name (2)". Decoding validates everything and returns `{ ok: false, error }` instead of throwing.
+`recipePageUrl(id)` in `src/data/share.ts` builds `<origin>/lmnt-calculator/#/recipe/<id>`. The link carries no data, so there is no encoding, versioning or import step: the route renders the built-in recipe, behind the first-launch notice for anyone who hasn't accepted it. `shareLink()` hands it to the share sheet or copies it to the clipboard. Old `#r=...` links from the first version fall through to the Recipes screen.
 
 ### Backup format
 
-One JSON file: `{ app: 'lmnt-calculator', format, exportedAt, ingredients, recipes, batches, settings }`. `format` is the layout version; older files are upgraded through `MIGRATIONS` in `src/data/backup.ts` on restore. Merge matches by id and keeps the newer `updatedAt`.
+One JSON file: `{ app: 'lmnt-calculator', format: 2, exportedAt, batches, settings }`. `format` is the layout version; older files are upgraded through `MIGRATIONS` in `src/data/backup.ts` on restore. A format 1 file (which also held recipes and ingredients) still restores: its batches and settings are kept and the rest is ignored. Merge matches by id and keeps the newer `updatedAt`. `settings.backupReminderSnoozedUntil` holds the "Not now" snooze.
 
 ### Calculation formulas
 
@@ -121,4 +114,4 @@ All in `src/calc/batch.ts` (grams, US dollars):
 - Savings per serving `= retailPrice − cost per serving`; per batch `= savings per serving × N`.
 - Minerals (mg per serving) `= Σ gramsPerServing × fraction × 1000`, with percent of daily value against 2,300 mg sodium and 4,700 mg potassium.
 - Mixing order: base ingredients largest first, then flavor ingredients smallest first.
-- Units: 1 oz = 28.3495 g; teaspoons `= grams / gramsPerTsp`, rounded to the nearest ⅛ (approximate).
+- Units: 1 oz = 28.3495 g.
