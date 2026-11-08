@@ -9,8 +9,6 @@ import { IngredientsScreen } from './screens/IngredientsScreen';
 import { LogEntryScreen } from './screens/LogEntryScreen';
 import { LogScreen } from './screens/LogScreen';
 import { MixingScreen } from './screens/MixingScreen';
-import { ReceiveScreen } from './screens/ReceiveScreen';
-import { RecipeEditor } from './screens/RecipeEditor';
 import { RecipesScreen } from './screens/RecipesScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { paths, tabFor, useRoute, type Route, type TabName } from './router';
@@ -29,12 +27,8 @@ function Screen({ route }: { route: Route }) {
       return <RecipesScreen />;
     case 'recipe':
       return <CalculatorScreen id={route.id} />;
-    case 'recipeEdit':
-      return <RecipeEditor id={route.id} />;
     case 'mix':
       return <MixingScreen id={route.id} />;
-    case 'receive':
-      return <ReceiveScreen key={route.data} data={route.data} />;
     case 'log':
       return <LogScreen />;
     case 'logEntry':

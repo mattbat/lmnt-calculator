@@ -1,9 +1,9 @@
 import { db, SETTINGS_ID, type SettingsRow } from './db';
 import { shareFile, type ShareOutcome } from './share';
-import type { BatchLogEntry, Ingredient, Recipe, Settings } from '../types';
+import type { BatchLogEntry, Settings } from '../types';
 
 /** The backup file layout version (B4). Bump it, and add a step to `MIGRATIONS`, when the layout changes. */
-export const BACKUP_FORMAT = 1;
+export const BACKUP_FORMAT = 2;
 export const APP_ID = 'lmnt-calculator';
 const REMINDER_DAYS = 60;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -12,29 +12,38 @@ export interface Backup {
   app: typeof APP_ID;
   format: number;
   exportedAt: number;
-  ingredients: Ingredient[];
-  recipes: Recipe[];
   batches: BatchLogEntry[];
   settings: SettingsRow;
 }
 
 /**
  * Upgrades an older backup, one format at a time. `MIGRATIONS[n]` turns a
- * format-n file into a format-(n+1) file. Empty until format 2 exists (B4).
+ * format-n file into a format-(n+1) file (B4).
  */
-export const MIGRATIONS: Record<number, (raw: Record<string, unknown>) => Record<string, unknown>> = {};
+export const MIGRATIONS: Record<number, (raw: Record<string, unknown>) => Record<string, unknown>> = {
+  // Format 2 holds only batches and settings: recipes and ingredients are built into the app now.
+  1: (raw) => {
+    const { ingredients: _ingredients, recipes: _recipes, ...rest } = raw;
+    void _ingredients;
+    void _recipes;
+    if (isObj(rest.settings)) {
+      const { showTeaspoons: _tsp, ...settings } = rest.settings;
+      void _tsp;
+      rest.settings = settings;
+    }
+    return rest;
+  },
+};
 
 export type ParseResult = { ok: true; backup: Backup } | { ok: false; error: string };
 
 export async function createBackup(now = Date.now()): Promise<Backup> {
-  const [ingredients, recipes, batches, settings] = await Promise.all([
-    db.ingredients.toArray(),
-    db.recipes.toArray(),
+  const [batches, settings] = await Promise.all([
     db.batches.toArray(),
     db.settings.get(SETTINGS_ID),
   ]);
   if (!settings) throw new Error('Settings are missing.');
-  return { app: APP_ID, format: BACKUP_FORMAT, exportedAt: now, ingredients, recipes, batches, settings };
+  return { app: APP_ID, format: BACKUP_FORMAT, exportedAt: now, batches, settings };
 }
 
 export function backupFileName(now = new Date()): string {
@@ -49,20 +58,9 @@ const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !
 const isStr = (v: unknown): v is string => typeof v === 'string';
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const optNum = (v: unknown) => v === undefined || isNum(v);
-const optStr = (v: unknown) => v === undefined || isStr(v);
 
 function fail(what: string): never {
   throw new Error(`The backup file is damaged (${what}).`);
-}
-
-function checkIngredient(v: unknown, i: number): void {
-  if (!isObj(v) || !isStr(v.id) || !isStr(v.name) || !isNum(v.packageGrams) || !isNum(v.packagePrice) || !isNum(v.updatedAt)) {
-    fail(`ingredient ${i + 1}`);
-  }
-  if ((v.group !== 'base' && v.group !== 'flavor') || !optStr(v.buyUrl) || !optNum(v.gramsPerTsp) || !isObj(v.minerals)) {
-    fail(`ingredient ${i + 1}`);
-  }
-  for (const f of Object.values(v.minerals)) if (!isNum(f)) fail(`ingredient ${i + 1} minerals`);
 }
 
 function checkLines(lines: unknown, what: string): void {
@@ -70,14 +68,6 @@ function checkLines(lines: unknown, what: string): void {
   for (const l of lines) {
     if (!isObj(l) || !isStr(l.ingredientId) || !isNum(l.gramsPerServing)) fail(what);
   }
-}
-
-function checkRecipe(v: unknown, i: number): void {
-  if (!isObj(v) || !isStr(v.id) || !isStr(v.name) || !isStr(v.color) || !isNum(v.sortOrder) || !isNum(v.updatedAt)) {
-    fail(`recipe ${i + 1}`);
-  }
-  if (!optStr(v.notes) || (v.builtIn !== undefined && typeof v.builtIn !== 'boolean')) fail(`recipe ${i + 1}`);
-  checkLines(v.lines, `recipe ${i + 1} ingredients`);
 }
 
 function checkBatch(v: unknown, i: number): void {
@@ -98,10 +88,9 @@ function checkBatch(v: unknown, i: number): void {
 function checkSettings(v: unknown): void {
   if (!isObj(v) || v.id !== SETTINGS_ID || !isNum(v.updatedAt)) fail('settings');
   const numbers = ['retailPricePerServing', 'servingsPerVial', 'defaultServings'];
-  if (numbers.some((k) => !isNum(v[k])) || !optNum(v.disclaimerAcceptedAt) || !optNum(v.lastBackupAt)) fail('settings');
+  if (numbers.some((k) => !isNum(v[k])) || !optNum(v.disclaimerAcceptedAt) || !optNum(v.lastBackupAt) || !optNum(v.backupReminderSnoozedUntil)) fail('settings');
   if (![0.01, 0.1, 1].includes(v.scalePrecision as number)) fail('settings');
   if (v.weightUnit !== 'g' && v.weightUnit !== 'oz') fail('settings');
-  if (typeof v.showTeaspoons !== 'boolean') fail('settings');
   if (v.theme !== 'system' && v.theme !== 'light' && v.theme !== 'dark') fail('settings');
   if (!isObj(v.lastBatchSize)) fail('settings');
 }
@@ -134,18 +123,14 @@ export function parseBackup(text: string, currentFormat = BACKUP_FORMAT): ParseR
       current = { ...step(current), format: format + 1 };
     }
     if (!isNum(current.exportedAt)) fail('date');
-    for (const key of ['ingredients', 'recipes', 'batches'] as const) {
-      if (!Array.isArray(current[key])) fail(key);
-    }
-    (current.ingredients as unknown[]).forEach(checkIngredient);
-    (current.recipes as unknown[]).forEach(checkRecipe);
-    (current.batches as unknown[]).forEach(checkBatch);
+    if (!Array.isArray(current.batches)) fail('batches');
+    current.batches.forEach(checkBatch);
     checkSettings(current.settings);
-    for (const key of ['ingredients', 'recipes', 'batches'] as const) {
-      const ids = (current[key] as Obj[]).map((r) => r.id);
-      if (new Set(ids).size !== ids.length) fail(`duplicate ${key}`);
-    }
-    return { ok: true, backup: current as unknown as Backup };
+    const ids = (current.batches as Obj[]).map((r) => r.id);
+    if (new Set(ids).size !== ids.length) fail('duplicate batches');
+    // Only what the app still stores is returned; a format-1 file's recipes and ingredients are dropped by its migration.
+    const { app, format, exportedAt, batches, settings } = current;
+    return { ok: true, backup: { app, format, exportedAt, batches, settings } as unknown as Backup };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : 'The backup file could not be read.' };
   }
@@ -156,8 +141,6 @@ export function parseBackup(text: string, currentFormat = BACKUP_FORMAT): ParseR
 export type RestoreMode = 'replace' | 'merge';
 
 export interface TableCounts {
-  ingredients: number;
-  recipes: number;
   batches: number;
 }
 
@@ -171,34 +154,24 @@ export interface BackupSummary {
   merge: { added: TableCounts; updated: TableCounts; unchanged: TableCounts };
 }
 
-const zero = (): TableCounts => ({ ingredients: 0, recipes: 0, batches: 0 });
+const zero = (): TableCounts => ({ batches: 0 });
 
 /** The preview shown before a restore is confirmed (B2). */
 export async function summarizeBackup(backup: Backup): Promise<BackupSummary> {
   const summary: BackupSummary = {
     exportedAt: backup.exportedAt,
-    inFile: {
-      ingredients: backup.ingredients.length,
-      recipes: backup.recipes.length,
-      batches: backup.batches.length,
-    },
-    onDevice: {
-      ingredients: await db.ingredients.count(),
-      recipes: await db.recipes.count(),
-      batches: await db.batches.count(),
-    },
+    inFile: { batches: backup.batches.length },
+    onDevice: { batches: await db.batches.count() },
     merge: { added: zero(), updated: zero(), unchanged: zero() },
   };
-  for (const key of ['ingredients', 'recipes', 'batches'] as const) {
-    const local = new Map<string, number>(
-      ((await db[key].toArray()) as Array<{ id: string; updatedAt: number }>).map((r) => [r.id, r.updatedAt]),
-    );
-    for (const incoming of backup[key]) {
-      const existing = local.get(incoming.id);
-      if (existing === undefined) summary.merge.added[key]++;
-      else if (incoming.updatedAt > existing) summary.merge.updated[key]++;
-      else summary.merge.unchanged[key]++;
-    }
+  const local = new Map(
+    (await db.batches.toArray()).map((r) => [r.id, r.updatedAt] as const),
+  );
+  for (const incoming of backup.batches) {
+    const existing = local.get(incoming.id);
+    if (existing === undefined) summary.merge.added.batches++;
+    else if (incoming.updatedAt > existing) summary.merge.updated.batches++;
+    else summary.merge.unchanged.batches++;
   }
   return summary;
 }
@@ -213,17 +186,13 @@ function newer<T extends { id: string; updatedAt: number }>(incoming: T[], local
 
 /** Applies a validated backup. 'replace' wipes everything first; 'merge' keeps the newer copy of each id. */
 export async function restoreBackup(backup: Backup, mode: RestoreMode): Promise<void> {
-  await db.transaction('rw', [db.ingredients, db.recipes, db.batches, db.settings], async () => {
+  await db.transaction('rw', [db.batches, db.settings], async () => {
     if (mode === 'replace') {
-      await Promise.all([db.ingredients.clear(), db.recipes.clear(), db.batches.clear(), db.settings.clear()]);
-      await db.ingredients.bulkAdd(backup.ingredients);
-      await db.recipes.bulkAdd(backup.recipes);
+      await Promise.all([db.batches.clear(), db.settings.clear()]);
       await db.batches.bulkAdd(backup.batches);
       await db.settings.add(backup.settings);
       return;
     }
-    await db.ingredients.bulkPut(newer(backup.ingredients, await db.ingredients.toArray()));
-    await db.recipes.bulkPut(newer(backup.recipes, await db.recipes.toArray()));
     await db.batches.bulkPut(newer(backup.batches, await db.batches.toArray()));
     const local = await db.settings.get(SETTINGS_ID);
     if (!local || backup.settings.updatedAt > local.updatedAt) await db.settings.put(backup.settings);
@@ -244,8 +213,13 @@ export async function backupNow(now = Date.now()): Promise<ShareOutcome> {
   return outcome;
 }
 
-/** B3: the log has entries and no backup has been made in 60 days. */
-export function needsBackupReminder(settings: Pick<Settings, 'lastBackupAt'>, batchCount: number, now = Date.now()): boolean {
+/** B3: the log has entries and no backup has been made in 60 days, unless "Not now" snoozed it. */
+export function needsBackupReminder(
+  settings: Pick<Settings, 'lastBackupAt' | 'backupReminderSnoozedUntil'>,
+  batchCount: number,
+  now = Date.now(),
+): boolean {
   if (batchCount === 0) return false;
+  if (settings.backupReminderSnoozedUntil !== undefined && now < settings.backupReminderSnoozedUntil) return false;
   return settings.lastBackupAt === undefined || now - settings.lastBackupAt > REMINDER_DAYS * DAY_MS;
 }

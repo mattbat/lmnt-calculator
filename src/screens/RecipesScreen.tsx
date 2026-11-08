@@ -1,52 +1,18 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 import { calculateBatch, gramsPerServing } from '../calc';
 import { BackupReminder } from '../components/BackupReminder';
 import { InstallHint } from '../components/InstallHint';
-import { Empty, Footer, Loading, Sheet } from '../components/ui';
+import { Empty, Footer, Loading } from '../components/ui';
 import { readableInk } from '../color';
 import { useIngredients, useRecipes, useSettings } from '../data/repo';
-import { mg, money, perServing, recipeFragment } from '../format';
-import { navigate, paths } from '../router';
-
-function PasteSheet({ onClose }: { onClose: () => void }) {
-  const [text, setText] = useState('');
-  const [error, setError] = useState('');
-  const open = () => {
-    const fragment = recipeFragment(text);
-    if (!fragment) return setError("That doesn't look like a recipe link. It should contain #r=…");
-    onClose();
-    navigate(`#${fragment}`);
-  };
-  return (
-    <Sheet title="Paste recipe link" onClose={onClose}>
-      <p>Paste a link someone sent you (or one copied from the browser version of this app).</p>
-      <textarea
-        className="link-box"
-        aria-label="Recipe link"
-        rows={4}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-      />
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
-      <div className="actions">
-        <button type="button" className="btn" disabled={!text.trim()} onClick={open}>
-          Open recipe
-        </button>
-      </div>
-    </Sheet>
-  );
-}
+import { mg, money, perServing } from '../format';
+import { paths } from '../router';
 
 /** Home (§9 screen 1): a card per recipe. */
 export function RecipesScreen() {
   const recipes = useRecipes();
   const ingredients = useIngredients();
   const settings = useSettings();
-  const [pasting, setPasting] = useState(false);
 
   const cards = useMemo(() => {
     if (!recipes || !ingredients || !settings) return undefined;
@@ -64,7 +30,7 @@ export function RecipesScreen() {
       {!cards || !settings ? (
         <Loading />
       ) : cards.length === 0 ? (
-        <Empty title="No recipes yet">Tap “New recipe” to make your first one, or paste a recipe link someone sent you.</Empty>
+        <Empty title="No recipes">There are no recipes in this version of the app.</Empty>
       ) : (
         <ul className="cards">
           {cards.map(({ recipe, result }) => (
@@ -90,16 +56,7 @@ export function RecipesScreen() {
           ))}
         </ul>
       )}
-      <div className="actions row">
-        <a className="btn" href={paths.newRecipe()}>
-          + New recipe
-        </a>
-        <button type="button" className="btn ghost" onClick={() => setPasting(true)}>
-          Paste recipe link
-        </button>
-      </div>
       <Footer />
-      {pasting && <PasteSheet onClose={() => setPasting(false)} />}
     </main>
   );
 }

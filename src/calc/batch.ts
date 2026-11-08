@@ -1,5 +1,5 @@
 import type { BatchSize, Ingredient, IngredientGroup, Mineral, Recipe, Settings } from '../types';
-import { formatTeaspoons, roundToPrecision } from './units';
+import { roundToPrecision } from './units';
 
 export const DAILY_VALUE_MG = { sodium: 2300, potassium: 4700 } as const;
 
@@ -15,8 +15,6 @@ export interface BatchLine {
   cost: number;
   /** True when the batch weight is under 10× the scale precision, where rounding can be off by more than 5% (C7). */
   lowPrecision: boolean;
-  /** Approximate teaspoons for the batch, e.g. "~2 ⅓ tsp"; set when the ingredient has grams per tsp. */
-  teaspoons?: string;
 }
 
 export interface BatchResult {
@@ -105,7 +103,7 @@ export function calculateBatch(
     for (const m of ['sodium', 'potassium', 'magnesium'] as const) {
       minerals[m] += lineGps * safe(ingredient.minerals[m] ?? 0) * 1000;
     }
-    const line: BatchLine = {
+    return {
       ingredientId: ingredient.id,
       name: ingredient.name,
       group: ingredient.group,
@@ -115,10 +113,6 @@ export function calculateBatch(
       cost: batchGrams * pricePerGram,
       lowPrecision: batchGrams > 0 && batchGrams < 10 * precision,
     };
-    if (ingredient.gramsPerTsp !== undefined && safe(ingredient.gramsPerTsp) > 0) {
-      line.teaspoons = formatTeaspoons(batchGrams, ingredient.gramsPerTsp);
-    }
-    return line;
   });
 
   const costPerBatch = lines.reduce((s, l) => s + l.cost, 0);

@@ -9,7 +9,7 @@ import {
   vialPlan,
 } from '../calc';
 import { Chip, Footer, Info, Loading, NumField, Section, Segmented, TopBar } from '../components/ui';
-import { ShareSheet } from '../components/ShareSheet';
+import { recipePageUrl, shareLink } from '../data/share';
 import { setLastBatchSize, updateSettings, useIngredients, useRecipe, useSettings } from '../data/repo';
 import { mg, money, perServing } from '../format';
 import { clearMixSession, hasMixSession } from '../mixSession';
@@ -38,7 +38,7 @@ function CalculatorBody({
   const [size, setSize] = useState<BatchSize>(
     () => settings.lastBatchSize[recipe.id] ?? { mode: 'servings', servings: settings.defaultServings },
   );
-  const [sharing, setSharing] = useState(false);
+  const [shareMessage, setShareMessage] = useState('');
   const unit = settings.weightUnit;
   const precision = settings.scalePrecision;
 
@@ -71,6 +71,13 @@ function CalculatorBody({
     await setLastBatchSize(recipe.id, size);
     if (fresh) clearMixSession(recipe.id);
     navigate(paths.mix(recipe.id));
+  };
+
+  const share = async () => {
+    const outcome = await shareLink(recipePageUrl(recipe.id), `${recipe.name} electrolyte mix`, `${recipe.name} on LMNT Calculator`);
+    setShareMessage(
+      outcome === 'copied' ? 'Link copied.' : outcome === 'failed' ? 'Could not share the link.' : outcome === 'shared' ? 'Shared.' : '',
+    );
   };
 
   const resumable = hasMixSession(recipe.id);
@@ -132,12 +139,11 @@ function CalculatorBody({
       >
         {result.missingIngredientIds.length > 0 && (
           <p className="form-error" role="alert">
-            This recipe uses {result.missingIngredientIds.length} ingredient(s) that no longer exist. Edit the recipe to
-            fix it.
+            This recipe uses {result.missingIngredientIds.length} ingredient(s) that no longer exist.
           </p>
         )}
         {result.lines.length === 0 ? (
-          <p className="muted">This recipe has no ingredients yet. Edit it to add some.</p>
+          <p className="muted">This recipe has no ingredients.</p>
         ) : (
           <ul className="lines">
             {result.lines.map((line) => (
@@ -150,12 +156,6 @@ function CalculatorBody({
                 </div>
                 <div className="line-sub">
                   <span className="num">{perServing(line.gramsPerServing, unit)}</span> per serving
-                  {settings.showTeaspoons && (
-                    <>
-                      {' · '}
-                      <span>{line.teaspoons ? `${line.teaspoons} (approximate)` : 'weigh only'}</span>
-                    </>
-                  )}
                 </div>
                 {line.lowPrecision && (
                   <Chip>Low precision: use a bigger batch or a finer scale (rounding could be off by over 5%)</Chip>
@@ -163,18 +163,6 @@ function CalculatorBody({
               </li>
             ))}
           </ul>
-        )}
-        <label className="switch-row">
-          <input
-            type="checkbox"
-            role="switch"
-            checked={settings.showTeaspoons}
-            onChange={(e) => void updateSettings({ showTeaspoons: e.target.checked })}
-          />
-          <span>Show approximate teaspoons</span>
-        </label>
-        {settings.showTeaspoons && (
-          <p className="hint">Approximate: powders vary in density, so weigh when you can.</p>
         )}
       </Section>
 
@@ -247,16 +235,17 @@ function CalculatorBody({
           </button>
         )}
         <div className="actions row">
-          <button type="button" className="btn ghost" onClick={() => setSharing(true)}>
+          <button type="button" className="btn ghost" onClick={() => void share()}>
             Share recipe
           </button>
-          <a className="btn ghost" href={paths.recipeEdit(recipe.id)}>
-            Edit recipe
-          </a>
         </div>
+        {shareMessage && (
+          <p className="hint" role="status">
+            {shareMessage}
+          </p>
+        )}
       </div>
       <Footer />
-      {sharing && <ShareSheet recipe={recipe} ingredients={ingredients} onClose={() => setSharing(false)} />}
     </main>
   );
 }
@@ -267,12 +256,16 @@ export function CalculatorScreen({ id }: { id: string }) {
   const ingredients = useIngredients();
   const settings = useSettings();
   if (!recipe || !ingredients || !settings) {
-    // useRecipe gives undefined both while loading and when missing; the live query settles quickly.
     return (
       <main className="screen">
         <TopBar title="Recipe" back={paths.recipes()} />
-        <Loading />
-        <p className="hint">If this doesn't load, the recipe may have been deleted. <a href={paths.recipes()}>Back to recipes</a></p>
+        {settings ? (
+          <p className="hint">
+            There is no recipe with that link. <a href={paths.recipes()}>Back to recipes</a>
+          </p>
+        ) : (
+          <Loading />
+        )}
       </main>
     );
   }

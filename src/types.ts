@@ -19,8 +19,6 @@ export interface Ingredient {
   packagePrice: number;
   buyUrl?: string;
   minerals: MineralFractions;
-  /** Approximate grams in one level teaspoon, for the teaspoon view (U2, U3). */
-  gramsPerTsp?: number;
   updatedAt: number;
 }
 
@@ -60,12 +58,12 @@ export interface Settings {
   servingsPerVial: number;
   defaultServings: number;
   weightUnit: WeightUnit;
-  /** Show approximate teaspoons next to weights (U2). */
-  showTeaspoons: boolean;
   theme: ThemeSetting;
   /** Set when the first-launch disclaimer (D1) is acknowledged. */
   disclaimerAcceptedAt?: number;
   lastBackupAt?: number;
+  /** The backup reminder stays hidden until this time ("Not now"). */
+  backupReminderSnoozedUntil?: number;
   /** Last batch size used per recipe id (C8). */
   lastBatchSize: Record<string, BatchSize>;
 }

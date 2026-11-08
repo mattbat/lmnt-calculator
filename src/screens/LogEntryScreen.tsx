@@ -1,11 +1,9 @@
 import { useState } from 'react';
-import { DEVIATION_FLAG, formatWeight, weightDeviation } from '../calc';
-import { Chip, Confirm, Empty, Footer, Loading, Sheet, TopBar } from '../components/ui';
+import { formatWeight } from '../calc';
+import { Confirm, Empty, Footer, Loading, TopBar } from '../components/ui';
 import {
-  createRecipe,
   deleteBatch,
   setLastBatchSize,
-  uniqueName,
   updateBatchNotes,
   updateBatchRating,
   useBatches,
@@ -15,20 +13,12 @@ import {
 import { formatDateTime, money } from '../format';
 import { useRun } from '../hooks/useRun';
 import { navigate, paths } from '../router';
-import type { BatchLogEntry, Recipe, RecipeLine, Settings } from '../types';
-
-function sameLines(a: RecipeLine[], b: RecipeLine[]): boolean {
-  return (
-    a.length === b.length &&
-    a.every((l, i) => l.ingredientId === b[i]!.ingredientId && Math.abs(l.gramsPerServing - b[i]!.gramsPerServing) < 1e-9)
-  );
-}
+import type { BatchLogEntry, Recipe, Settings } from '../types';
 
 function EntryBody({ batch, recipes, settings }: { batch: BatchLogEntry; recipes: Recipe[]; settings: Settings }) {
   const [notes, setNotes] = useState(batch.notes);
   const [saved, setSaved] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [choosing, setChoosing] = useState(false);
   const [error, run] = useRun();
   const fmt = (g: number) => formatWeight(g, settings.weightUnit, settings.scalePrecision);
   const current = recipes.find((r) => r.id === batch.recipeId);
@@ -39,22 +29,8 @@ function EntryBody({ batch, recipes, settings }: { batch: BatchLogEntry; recipes
   };
 
   const makeAgain = () => {
-    if (current && sameLines(current.lines, batch.recipeSnapshot.lines)) void run(() => open(current.id));
-    else setChoosing(true);
+    if (current) void run(() => open(current.id));
   };
-
-  const restoreThen = () =>
-    run(async () => {
-      const copy = await createRecipe({
-        name: uniqueName(
-          batch.recipeSnapshot.name,
-          recipes.map((r) => r.name),
-        ),
-        color: batch.recipeSnapshot.color,
-        lines: batch.recipeSnapshot.lines.map((l) => ({ ...l })),
-      });
-      await open(copy.id);
-    });
 
   const saveNotes = async () => {
     if (notes === batch.notes) return;
@@ -87,22 +63,19 @@ function EntryBody({ batch, recipes, settings }: { batch: BatchLogEntry; recipes
 
       <h2>Ingredients</h2>
       <ul className="lines">
-        {batch.lines.map((l) => {
-          const off = l.actualGrams !== undefined && weightDeviation(l.actualGrams, l.targetGrams) > DEVIATION_FLAG;
-          return (
-            <li key={l.ingredientId} className="line">
-              <div className="line-main">
-                <span className="line-name">{l.name}</span>
-                <span className="line-amount num">{fmt(l.targetGrams)}</span>
+        {batch.lines.map((l) => (
+          <li key={l.ingredientId} className="line">
+            <div className="line-main">
+              <span className="line-name">{l.name}</span>
+              <span className="line-amount num">{fmt(l.targetGrams)}</span>
+            </div>
+            {l.actualGrams !== undefined && (
+              <div className="line-sub">
+                Weighed <span className="num">{fmt(l.actualGrams)}</span>
               </div>
-              {l.actualGrams !== undefined && (
-                <div className="line-sub">
-                  Weighed <span className="num">{fmt(l.actualGrams)}</span> {off && <Chip>More than 5% off target</Chip>}
-                </div>
-              )}
-            </li>
-          );
-        })}
+            )}
+          </li>
+        ))}
       </ul>
 
       <h2>Rating</h2>
@@ -150,38 +123,16 @@ function EntryBody({ batch, recipes, settings }: { batch: BatchLogEntry; recipes
         </p>
       )}
       <div className="actions">
-        <button type="button" className="btn big" onClick={makeAgain}>
-          Make again
-        </button>
+        {current && (
+          <button type="button" className="btn big" onClick={makeAgain}>
+            Make again
+          </button>
+        )}
         <button type="button" className="btn ghost danger-text" onClick={() => setConfirmDelete(true)}>
           Delete entry
         </button>
       </div>
       <Footer />
-      {choosing && (
-        <Sheet title="This recipe has changed" onClose={() => setChoosing(false)}>
-          <p>
-            {current
-              ? `${batch.recipeSnapshot.name} is different now from when you made this batch. Which version do you want?`
-              : `${batch.recipeSnapshot.name} has been deleted. You can bring it back as it was.`}
-          </p>
-          <div className="actions">
-            {current && (
-              <button type="button" className="btn" onClick={() => void run(() => open(current.id))}>
-                Use the recipe as it is now
-              </button>
-            )}
-            <button type="button" className={current ? 'btn ghost' : 'btn'} onClick={() => void restoreThen()}>
-              {current ? 'Use it as it was then (adds a copy)' : 'Bring it back as it was'}
-            </button>
-          </div>
-          {error && (
-            <p className="form-error" role="alert">
-              {error}
-            </p>
-          )}
-        </Sheet>
-      )}
       {confirmDelete && (
         <Confirm
           title="Delete this entry?"

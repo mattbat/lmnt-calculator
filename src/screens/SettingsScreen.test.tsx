@@ -32,6 +32,19 @@ async function open() {
 
 const fileInput = () => screen.getByLabelText('Choose backup file') as HTMLInputElement;
 const backupFile = (text: string) => new File([text], 'backup.json', { type: 'application/json' });
+const batchEntry = {
+  madeAt: 1,
+  recipeId: 'raw',
+  recipeSnapshot: { name: 'Raw', color: '#64748b', lines: [] },
+  servings: 1,
+  vials: 1,
+  servingsPerVial: 1,
+  fillGramsPerVial: 1,
+  lines: [],
+  totalCost: 0,
+  notes: 'kept',
+};
+
 
 describe('Settings', () => {
   it('changes units, precision, vials, default batch, retail price and theme', async () => {
@@ -39,7 +52,6 @@ describe('Settings', () => {
     await user.click(screen.getByRole('radio', { name: 'Ounces' }));
     await user.click(screen.getByRole('radio', { name: '0.1 g' }));
     await user.click(screen.getByRole('radio', { name: 'Dark' }));
-    await user.click(screen.getByRole('switch', { name: 'Show approximate teaspoons' }));
     for (const [label, value] of [
       ['Servings per vial', '2'],
       ['Default batch (servings)', '12'],
@@ -54,7 +66,6 @@ describe('Settings', () => {
         weightUnit: 'oz',
         scalePrecision: 0.1,
         theme: 'dark',
-        showTeaspoons: true,
         servingsPerVial: 2,
         defaultServings: 12,
         retailPricePerServing: 1.25,
@@ -81,7 +92,7 @@ describe('Settings', () => {
     expect(await screen.findByText(/Backup file downloaded/)).toBeInTheDocument();
     expect(share.calls).toHaveLength(1);
     expect(share.calls[0]![0]).toMatch(/^lmnt-calculator-backup-\d{4}-\d{2}-\d{2}\.json$/);
-    expect(JSON.parse(share.calls[0]![1])).toMatchObject({ app: 'lmnt-calculator', format: 1 });
+    expect(JSON.parse(share.calls[0]![1])).toMatchObject({ app: 'lmnt-calculator', format: 2 });
     expect((await getSettings()).lastBackupAt).toBeGreaterThan(0);
     expect(await screen.findByText(/Last backup:/)).toBeInTheDocument();
     share.outcome = 'cancelled';
@@ -94,16 +105,17 @@ describe('Settings', () => {
 
   it('restores with a summary: merge (B2)', async () => {
     const user = await open();
-    const backup = JSON.stringify(await createBackup());
-    await db.recipes.delete('lemon');
-    await user.upload(fileInput(), backupFile(backup));
+    await createBatch(batchEntry);
+    const mergeBackup = JSON.stringify(await createBackup());
+    await db.batches.clear();
+    await user.upload(fileInput(), backupFile(mergeBackup));
     const sheet = await screen.findByRole('dialog', { name: 'Restore from backup' });
-    expect(sheet).toHaveTextContent('3 recipes');
-    expect(sheet).toHaveTextContent('2 recipes');
+    expect(sheet).toHaveTextContent('1 log entry');
+    expect(sheet).toHaveTextContent('0 log entries');
     expect(sheet).toHaveTextContent('add 1');
     await user.click(within(sheet).getByRole('button', { name: 'Merge' }));
     expect(await screen.findByText(/The backup was merged in/)).toBeInTheDocument();
-    expect(await db.recipes.count()).toBe(3);
+    expect(await db.batches.count()).toBe(1);
   });
 
   it('restores with a summary: replace all asks to confirm (B2)', async () => {
@@ -125,7 +137,7 @@ describe('Settings', () => {
     const sheet = await screen.findByRole('dialog', { name: 'Restore from backup' });
     await user.click(within(sheet).getByRole('button', { name: 'Replace all' }));
     const confirm = await screen.findByRole('dialog', { name: 'Replace everything?' });
-    expect(confirm).toHaveTextContent('1 log entries');
+    expect(confirm).toHaveTextContent('1 log entry');
     await user.click(within(confirm).getByRole('button', { name: 'Cancel' }));
     expect(await db.batches.count()).toBe(1);
     await user.click(within(sheet).getByRole('button', { name: 'Replace all' }));

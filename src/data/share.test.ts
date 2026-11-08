@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { shareFile, shareLink } from './share';
+import { recipePageUrl, shareFile, shareLink } from './share';
 
 const abort = () => new DOMException('cancelled', 'AbortError');
 
@@ -55,5 +55,16 @@ describe('shareLink', () => {
 
     stub({ clipboard: { writeText: vi.fn().mockRejectedValue(new Error('no')) } });
     expect(await shareLink('https://x', 'T', 'text')).toBe('failed');
+  });
+});
+
+describe('recipePageUrl', () => {
+  it('points at the recipe page under the base path', () => {
+    expect(recipePageUrl('watermelon', 'https://mattbat.com')).toBe('https://mattbat.com/lmnt-calculator/#/recipe/watermelon');
+    expect(recipePageUrl('a b/c', 'https://mattbat.com/')).toBe('https://mattbat.com/lmnt-calculator/#/recipe/a%20b%2Fc');
+  });
+
+  it('defaults to this page\'s origin', () => {
+    expect(recipePageUrl('raw')).toBe(`${window.location.origin}/lmnt-calculator/#/recipe/raw`);
   });
 });

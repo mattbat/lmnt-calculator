@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie';
-import { DEFAULT_INGREDIENTS, DEFAULT_RECIPES, DEFAULT_SETTINGS } from '../calc/defaults';
-import type { BatchLogEntry, Ingredient, Recipe, Settings } from '../types';
+import { DEFAULT_SETTINGS } from '../calc/defaults';
+import type { BatchLogEntry, Settings } from '../types';
 
 export const SETTINGS_ID = 'settings';
 
@@ -12,8 +12,6 @@ export type SettingsRow = Settings & { id: typeof SETTINGS_ID; updatedAt: number
  * `version(n)` with an `upgrade()` migration; never edit an existing version.
  */
 export class LmntDb extends Dexie {
-  ingredients!: EntityTable<Ingredient, 'id'>;
-  recipes!: EntityTable<Recipe, 'id'>;
   batches!: EntityTable<BatchLogEntry, 'id'>;
   settings!: EntityTable<SettingsRow, 'id'>;
 
@@ -25,12 +23,21 @@ export class LmntDb extends Dexie {
       batches: 'id, madeAt, recipeId',
       settings: 'id',
     });
+    // Recipes and ingredients are built into the app (src/calc/defaults.ts), so
+    // they no longer live in the database. Batches and settings are kept as they are.
+    this.version(2)
+      .stores({ recipes: null, ingredients: null })
+      .upgrade((tx) =>
+        tx
+          .table('settings')
+          .toCollection()
+          .modify((row: Record<string, unknown>) => {
+            delete row.showTeaspoons;
+          }),
+      );
     // Runs once, when the database is first created.
     this.on('populate', (tx) => {
-      const now = Date.now();
-      tx.table('ingredients').bulkAdd(DEFAULT_INGREDIENTS.map((i) => ({ ...i, updatedAt: now })));
-      tx.table('recipes').bulkAdd(DEFAULT_RECIPES.map((r) => ({ ...r, updatedAt: now })));
-      tx.table('settings').add({ ...DEFAULT_SETTINGS, id: SETTINGS_ID, updatedAt: now });
+      tx.table('settings').add({ ...DEFAULT_SETTINGS, id: SETTINGS_ID, updatedAt: Date.now() });
     });
   }
 }

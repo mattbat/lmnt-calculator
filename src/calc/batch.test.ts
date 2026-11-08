@@ -72,12 +72,10 @@ describe('spreadsheet numbers', () => {
     }
   });
 
-  it('batch weights, vial fill and teaspoons', () => {
+  it('batch weights and vial fill', () => {
     const r = run('lemon', { mode: 'servings', servings: 30 }, { servingsPerVial: 2 });
     const salt = r.lines.find((l) => l.ingredientId === 'salt')!;
     expect(salt.batchGrams).toBeCloseTo(75, 9);
-    expect(salt.teaspoons).toBe('~15 tsp');
-    expect(r.lines.find((l) => l.ingredientId === 'stevia')!.teaspoons).toBeUndefined();
     expect(r.vials).toBe(15);
     expect(r.fillGramsPerVial).toBeCloseTo(9.47, 9);
   });
@@ -157,13 +155,12 @@ describe('calculateBatch edge cases', () => {
   it('tolerates bad ingredient data', () => {
     const odd: Ingredient[] = [
       { ...ing('salt'), packageGrams: 0 },
-      { ...ing('stevia'), gramsPerTsp: -1 },
+      ing('stevia'),
     ];
     const r: Recipe = { ...recipe('lemon'), lines: [{ ingredientId: 'salt', gramsPerServing: NaN }, { ingredientId: 'stevia', gramsPerServing: 1 }] };
     const out = calculateBatch(r, odd, { mode: 'servings', servings: 2 }, DEFAULT_SETTINGS);
     expect(out.costPerBatch).toBeGreaterThan(0);
     expect(out.lines[0]!.cost).toBe(0);
-    expect(out.lines[1]!.teaspoons).toBeUndefined();
   });
 });
 

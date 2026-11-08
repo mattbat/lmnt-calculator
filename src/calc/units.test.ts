@@ -1,7 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import {
-  formatTeaspoons,
   formatWeight,
   gramsToOunces,
   ouncesToGrams,
@@ -86,44 +85,5 @@ describe('formatWeight', () => {
     expect(formatWeight(12.6, 'g', 1)).toBe('13 g');
     expect(formatWeight(28.3495, 'oz', 0.01)).toBe('1.000 oz');
     expect(formatWeight(56.699, 'oz', 0.1)).toBe('2.00 oz');
-  });
-});
-
-describe('formatTeaspoons', () => {
-  it('uses kitchen fractions', () => {
-    expect(formatTeaspoons(5, 5)).toBe('~1 tsp');
-    expect(formatTeaspoons(11.6667, 5)).toBe('~2 ⅓ tsp');
-    expect(formatTeaspoons(2.5, 5)).toBe('~½ tsp');
-    expect(formatTeaspoons(1.25, 5)).toBe('~¼ tsp');
-    expect(formatTeaspoons(0.7, 5)).toBe('~⅛ tsp');
-    expect(formatTeaspoons(4.9, 5)).toBe('~1 tsp');
-    expect(formatTeaspoons(3.3, 5)).toBe('~⅔ tsp');
-    expect(formatTeaspoons(75, 5)).toBe('~15 tsp');
-  });
-
-  it('handles tiny, zero and missing values', () => {
-    expect(formatTeaspoons(0.1, 5)).toBe('a pinch (< ⅛ tsp)');
-    expect(formatTeaspoons(0.5, 5)).toBe('~⅛ tsp');
-    expect(formatTeaspoons(0, 5)).toBe('0 tsp');
-    expect(formatTeaspoons(NaN, 5)).toBe('0 tsp');
-    expect(formatTeaspoons(5, undefined)).toBe('weigh only');
-    expect(formatTeaspoons(5, 0)).toBe('weigh only');
-  });
-
-  it('is within 1/16 tsp of the exact volume (or 1/24 for thirds)', () => {
-    fc.assert(
-      fc.property(
-        fc.double({ min: 0.7, max: 100, noNaN: true }),
-        fc.double({ min: 0.5, max: 10, noNaN: true }),
-        (g, perTsp) => {
-          const text = formatTeaspoons(g, perTsp);
-          const m = /^~(?:(\d+) ?)?([⅛¼⅓⅜½⅝⅔¾⅞])? tsp$/.exec(text);
-          expect(m).not.toBeNull();
-          const frac = { '⅛': 1 / 8, '¼': 1 / 4, '⅓': 1 / 3, '⅜': 3 / 8, '½': 1 / 2, '⅝': 5 / 8, '⅔': 2 / 3, '¾': 3 / 4, '⅞': 7 / 8 } as Record<string, number>;
-          const value = Number(m![1] ?? 0) + (m![2] ? frac[m![2]]! : 0);
-          if (g / perTsp >= 1 / 8) expect(Math.abs(value - g / perTsp)).toBeLessThanOrEqual(1 / 16 + 1e-9);
-        },
-      ),
-    );
   });
 });

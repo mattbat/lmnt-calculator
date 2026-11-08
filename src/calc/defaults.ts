@@ -9,7 +9,6 @@ export const DEFAULT_INGREDIENTS: Ingredient[] = [
     packageGrams: 737.0876,
     packagePrice: 11.39,
     minerals: { sodium: 0.38 },
-    gramsPerTsp: 5,
     updatedAt: 0,
   },
   {
@@ -19,7 +18,6 @@ export const DEFAULT_INGREDIENTS: Ingredient[] = [
     packageGrams: 250,
     packagePrice: 17.97,
     minerals: { potassium: 0.524 },
-    gramsPerTsp: 5.75,
     updatedAt: 0,
   },
   {
@@ -134,7 +132,6 @@ export const DEFAULT_SETTINGS: Settings = {
   servingsPerVial: 1,
   defaultServings: 30,
   weightUnit: 'g',
-  showTeaspoons: false,
   theme: 'system',
   lastBatchSize: {},
 };

@@ -46,7 +46,7 @@ describe('App shell', () => {
       ['#/more/about', 'About'],
       ['#/more/help', 'Help'],
       ['#/recipe/lemon', 'Lemon'],
-      ['#/recipe/lemon/edit', 'Edit recipe'],
+      ['#/recipe/lemon/edit', 'Lemon'],
       ['#/log/missing', 'Entry not found'],
     ] as const) {
       act(() => {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
  * Tiny hash router. GitHub Pages can't fall back to index.html for deep
  * links, so routes live after the # (REQUIREMENTS.md T3).
  *
- * Shared recipe links look like `#r=<data>` (SH1) and are routed to `receive`.
+ * Recipe pages live at `#/recipe/<id>`. Old `#r=` links fall through to the Recipes screen.
  * Mixing mode lives at `#/mix/<recipeId>`; the update banner is held back there (T7).
  */
 
@@ -12,9 +12,7 @@ export type TabName = 'recipes' | 'log' | 'ingredients' | 'more';
 
 export type Route =
   | { name: TabName }
-  | { name: 'receive'; data: string }
   | { name: 'recipe'; id: string }
-  | { name: 'recipeEdit'; id: string }
   | { name: 'mix'; id: string }
   | { name: 'logEntry'; id: string }
   | { name: 'settings' }
@@ -30,7 +28,6 @@ function decode(part: string | undefined): string {
 }
 
 export function parseRoute(hash: string): Route {
-  if (hash.startsWith('#r=') && hash.length > 3) return { name: 'receive', data: hash.slice(3) };
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
   const id = decode(parts[1]);
   switch (parts[0]) {
@@ -40,7 +37,7 @@ export function parseRoute(hash: string): Route {
       return { name: 'ingredients' };
     case 'recipe':
       if (!id) return { name: 'recipes' };
-      return parts[2] === 'edit' ? { name: 'recipeEdit', id } : { name: 'recipe', id };
+      return { name: 'recipe', id };
     case 'mix':
       return id ? { name: 'mix', id } : { name: 'recipes' };
     case 'more':
@@ -58,10 +55,7 @@ export const paths = {
   log: () => '#/log',
   ingredients: () => '#/ingredients',
   more: () => '#/more',
-  receive: (data: string) => `#r=${data}`,
   recipe: (id: string) => `#/recipe/${encodeURIComponent(id)}`,
-  recipeEdit: (id: string) => `#/recipe/${encodeURIComponent(id)}/edit`,
-  newRecipe: () => '#/recipe/new/edit',
   mix: (id: string) => `#/mix/${encodeURIComponent(id)}`,
   logEntry: (id: string) => `#/log/${encodeURIComponent(id)}`,
   settings: () => '#/more/settings',
@@ -72,9 +66,7 @@ export const paths = {
 /** Which bottom tab a route belongs to. */
 export function tabFor(route: Route): TabName {
   switch (route.name) {
-    case 'receive':
     case 'recipe':
-    case 'recipeEdit':
     case 'mix':
       return 'recipes';
     case 'logEntry':

@@ -36,9 +36,3 @@ export function perServing(grams: number, unit: WeightUnit): string {
 export function plain(n: number, places = 4): string {
   return String(Number(n.toFixed(places)));
 }
-
-/** Pulls the "r=..." part out of a pasted link (or a bare fragment). */
-export function recipeFragment(text: string): string | undefined {
-  const match = /#?(r=[^\s&]+)/.exec(text.includes('#') ? text.slice(text.indexOf('#')) : text);
-  return match?.[1];
-}

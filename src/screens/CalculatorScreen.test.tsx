@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getSettings, updateSettings } from '../data/repo';
@@ -80,16 +80,6 @@ describe('Calculator screen', () => {
     await vi.waitFor(() => expect(amount('salt')).toHaveTextContent(/ g$/));
   });
 
-  it('shows approximate teaspoons, or "weigh only" (U2)', async () => {
-    const user = userEvent.setup();
-    await open();
-    expect(screen.queryByText(/powders vary in density/)).not.toBeInTheDocument();
-    await user.click(screen.getByRole('switch', { name: 'Show approximate teaspoons' }));
-    expect(await screen.findByText('~15 tsp (approximate)')).toBeInTheDocument();
-    expect(screen.getAllByText('weigh only').length).toBeGreaterThan(0);
-    expect(screen.getByText(/powders vary in density/)).toBeInTheDocument();
-  });
-
   it('warns when a line is below 10x the scale precision (C7)', async () => {
     const user = userEvent.setup();
     await updateSettings({ scalePrecision: 0.1 });
@@ -129,14 +119,17 @@ describe('Calculator screen', () => {
     expect(screen.getByText(/last vial with 2 servings/)).toBeInTheDocument();
   });
 
-  it('starts mixing, links to the editor, and can share', async () => {
+  it('starts mixing and shares a link to the recipe page', async () => {
     const user = userEvent.setup();
+    const share = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', Object.assign(Object.create(navigator), { share }));
     await open();
-    expect(screen.getByRole('link', { name: 'Edit recipe' })).toHaveAttribute('href', '#/recipe/watermelon/edit');
+    expect(screen.queryByRole('link', { name: 'Edit recipe' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: 'Show approximate teaspoons' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Share recipe' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Share recipe' });
-    await vi.waitFor(() => expect((within(dialog).getByLabelText('Recipe link') as HTMLTextAreaElement).value).toContain('#r='));
-    await user.click(within(dialog).getByRole('button', { name: 'Close' }));
+    await vi.waitFor(() => expect(share).toHaveBeenCalled());
+    expect(share.mock.calls[0]![0].url).toBe(`${window.location.origin}/lmnt-calculator/#/recipe/watermelon`);
+    vi.unstubAllGlobals();
     await user.click(screen.getByRole('button', { name: 'Start mixing' }));
     await vi.waitFor(() => expect(window.location.hash).toBe('#/mix/watermelon'));
   });
