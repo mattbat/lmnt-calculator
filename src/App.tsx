@@ -81,7 +81,8 @@ export function App() {
 
   return (
     <div className="app">
-      <Screen route={route} />
+      {/* Keyed by route so each screen mounts fresh and starts scrolled to the top. */}
+      <Screen key={JSON.stringify(route)} route={route} />
       {route.name !== 'mix' && (
         <nav className="tabbar" aria-label="Main">
           {TABS.map((t) => (

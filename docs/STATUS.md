@@ -112,7 +112,7 @@ Recipes (cards with name, cost per serving and electrolytes only), Calculator (S
 | Q-1 | ✅ | `npm run check` passes: lint, types, 154 unit/component tests, build, 19 Playwright runs. |
 | Q-2 | ✅ | Calc example and property tests. |
 | Q-3 | ✅ | Share URL, backup/restore (format 1 and 2), Dexie v1 to v2 migration, unit conversion, plus screen tests. |
-| Q-4 | ✅ | e2e on iPhone WebKit and Android Chromium: batch to log to Make again (Start mixing on screen at load); share link to a fresh context; backup, clear, restore; Ingredients read-only; old `#r=` link; backup banner Not now; offline launch. |
+| Q-4 | ✅ | e2e on iPhone WebKit and Android Chromium: batch to log to Make again (Start mixing on screen at load); share link to a fresh context; backup, clear, restore; Ingredients read-only; old `#r=` link; backup banner Not now; offline launch; layout (tab bar on the bottom edge, page never scrolls, main screens fit without scrolling). |
 | Q-5 | ✅ | Coverage about 98% lines overall, 100% for `src/calc`; thresholds enforced. |
 | Q-6 | 🟡 | CI workflow written (deploy only from `main`), not yet run on GitHub. |
 

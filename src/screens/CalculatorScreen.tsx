@@ -85,57 +85,58 @@ function CalculatorBody({
   return (
     <main className="screen">
       <TopBar title={recipe.name} back={paths.recipes()} backLabel="Back to recipes" color={recipe.color} />
-      <p className="muted">
-        Mix one serving into 16–32 oz (about 0.5–1 L) of water
-      </p>
 
-      <Section title="Batch size">
-        <Segmented
-          label="Batch size by"
-          value={size.mode}
-          onChange={switchMode}
-          options={(['servings', 'vials', 'weight'] as Mode[]).map((m) => ({ value: m, label: MODE_LABEL[m] }))}
-        />
-        <NumField
-          label={
-            size.mode === 'servings'
-              ? 'Number of servings'
-              : size.mode === 'vials'
-                ? 'Number of vials'
-                : `Total weight of mix (${unit})`
-          }
-          value={sizeValue(size, unit)}
-          onValue={setAmount}
-          big
-          min={0.0001}
-          suffix={size.mode === 'weight' ? unit : undefined}
-        />
+      <section className="size-block" aria-label="Batch size">
+        <div className="size-row">
+          <Segmented
+            label="Batch size by"
+            value={size.mode}
+            onChange={switchMode}
+            options={(['servings', 'vials', 'weight'] as Mode[]).map((m) => ({ value: m, label: MODE_LABEL[m] }))}
+          />
+          <NumField
+            label={
+              size.mode === 'servings'
+                ? 'Number of servings'
+                : size.mode === 'vials'
+                  ? 'Number of vials'
+                  : `Total weight of mix (${unit})`
+            }
+            hideLabel
+            value={sizeValue(size, unit)}
+            onValue={setAmount}
+            big
+            min={0.0001}
+            suffix={size.mode === 'weight' ? unit : undefined}
+          />
+        </div>
         <p className="summary" aria-live="polite">
           <strong className="num">{Number(result.servings.toFixed(2))}</strong> servings ·{' '}
           <strong className="num">{plan.totalVials}</strong> {plan.totalVials === 1 ? 'vial' : 'vials'}
           {size.mode === 'weight' && result.leftoverGrams > 0 && (
             <>
               {' '}
-              · <span className="num">{fmt(result.leftoverGrams)}</span> leftover (not enough for another serving)
+              · <span className="num">{fmt(result.leftoverGrams)}</span> leftover
             </>
           )}
+          <span className="muted"> · one per 16–32 oz water</span>
         </p>
-      </Section>
+      </section>
 
-      <div className="actions start-actions">
-        <button type="button" className="btn big" onClick={() => void startMixing(!resumable)} disabled={result.lines.length === 0 || result.servings <= 0}>
-          {resumable ? 'Resume mixing' : 'Start mixing'}
-        </button>
-        <div className="actions row">
-          {resumable && (
-            <button type="button" className="btn ghost small" onClick={() => void startMixing(true)}>
-              Start over
-            </button>
-          )}
-          <button type="button" className="btn ghost small" onClick={() => void share()}>
-            Share recipe
+      <div className="start-actions">
+        <div className="start-row">
+          <button type="button" className="btn big" onClick={() => void startMixing(!resumable)} disabled={result.lines.length === 0 || result.servings <= 0}>
+            {resumable ? 'Resume mixing' : 'Start mixing'}
+          </button>
+          <button type="button" className="btn ghost share-btn" aria-label="Share recipe" onClick={() => void share()}>
+            Share
           </button>
         </div>
+        {resumable && (
+          <button type="button" className="link" onClick={() => void startMixing(true)}>
+            Start over
+          </button>
+        )}
         {shareMessage && (
           <p className="hint" role="status">
             {shareMessage}
@@ -169,13 +170,15 @@ function CalculatorBody({
             {result.lines.map((line) => (
               <li key={line.ingredientId} className="line">
                 <div className="line-main">
-                  <span className="line-name">{line.name}</span>
+                  <span className="line-name">
+                    {line.name}{' '}
+                    <span className="line-sub">
+                      <span className="num">{perServing(line.gramsPerServing, unit)}</span>/serving
+                    </span>
+                  </span>
                   <span className="line-amount num" data-testid={`amount-${line.ingredientId}`}>
                     {fmt(line.batchGrams)}
                   </span>
-                </div>
-                <div className="line-sub">
-                  <span className="num">{perServing(line.gramsPerServing, unit)}</span> per serving
                 </div>
                 {line.lowPrecision && (
                   <Chip>Low precision: use a bigger batch or a finer scale (rounding could be off by over 5%)</Chip>
@@ -187,7 +190,6 @@ function CalculatorBody({
       </Section>
 
       <section className="summary-card" aria-label="Summary">
-        <h2>Summary</h2>
         <dl className="triple">
           <div>
             <dd className="num">{fmt(result.totalGrams)}</dd>
@@ -205,13 +207,15 @@ function CalculatorBody({
           </div>
         </dl>
         <p className="summary-row">
-          <strong className="num">{money(result.costPerServing)}</strong> / serving · save{' '}
-          <strong className="num">{money(result.savingsPerServing)}</strong> a serving (
-          <span className="num">{money(result.savingsPerBatch)}</span> a batch) vs{' '}
-          {money(settings.retailPricePerServing)} retail
-          <Info label="comparison price">Change the retail price per stick in Settings.</Info>
+          <strong className="num">{money(result.costPerServing)}</strong>/serving · saves{' '}
+          <strong className="num">{money(result.savingsPerBatch)}</strong> a batch
+          <Info label="comparison price">
+            That's <span className="num">{money(result.savingsPerServing)}</span> a serving less than{' '}
+            {money(settings.retailPricePerServing)} per stick at retail. Change the retail price in Settings.
+          </Info>
         </p>
         <p className="chips">
+          <span className="chips-label">Per serving</span>
           <Chip tone="info">
             Na {mg(result.minerals.sodium)} · {Math.round(result.dailyValue.sodium)}%
           </Chip>
@@ -220,7 +224,6 @@ function CalculatorBody({
           </Chip>
           <Chip tone="info">Mg {mg(result.minerals.magnesium)}</Chip>
         </p>
-        <p className="hint">Per serving: sodium and potassium show the percent of the daily value.</p>
         {plan.partialServings > 0 && (
           <p className="hint">
             {plan.totalVials - 1} full {plan.totalVials - 1 === 1 ? 'vial' : 'vials'}, plus a last vial with{' '}

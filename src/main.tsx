@@ -10,6 +10,13 @@ import { applyTheme, followSystemTheme } from './theme';
 applyTheme();
 followSystemTheme();
 
+// No pinch zoom. Android honors user-scalable=no in index.html and touch-action
+// in styles.css; iOS ignores both for pinch, but cancelling Safari's
+// gesture events stops it.
+for (const type of ['gesturestart', 'gesturechange']) {
+  document.addEventListener(type, (e) => e.preventDefault(), { passive: false });
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

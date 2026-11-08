@@ -84,7 +84,7 @@ describe('Ingredients screen', () => {
     expect(salt).toHaveTextContent('$0.0155/g');
     expect(within(salt).queryByText('Price not set')).not.toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
-    expect(screen.getByText(/built in/)).toBeInTheDocument();
+    expect(screen.getByText(/Built-in prices/)).toBeInTheDocument();
     expect(screen.getByText('Stevia').closest('li')).toHaveTextContent('Flavor');
   });
 });

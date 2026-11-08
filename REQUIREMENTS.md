@@ -260,6 +260,7 @@ Navigation: a bottom tab bar with **Recipes · Log · Ingredients · More** (Set
 | 2026-11-07 | The equipment page is a placeholder until Matt sends the list. |
 | 2026-11-07 | The app icon is a white drop with a lightning bolt on indigo (`#4f46e5`). Rejected options are kept in `docs/icon-research/`. |
 | 2026-11-07 | The app's accent and background tints change from teal to indigo to match the icon. |
+| 2026-11-08 | Less scrolling: the app is a fixed-height frame with the tab bar as its bottom row (not position: fixed, which floated above the bottom on iPhone at launch). The calculator, Settings, About and Ingredients are compacted to fit an iPhone 17 screen, and pinch zoom is off. |
 | 2026-11-07 | **Direction change after the first phone test: the app is read-only with built-in recipes.** Recipes and ingredient prices come from `src/calc/defaults.ts`, so an app update changes them everywhere. Dexie `version(2)` drops the recipes and ingredients tables. |
 | 2026-11-07 | Removed the recipe editor, **+ New recipe**, duplicate, delete and **Edit recipe** (§9 screen 4). |
 | 2026-11-07 | Removed **Paste recipe link**, the Receive screen and the `#r=` link format (SH1–SH5). **Share recipe** now sends a link to the recipe's page (§11). |

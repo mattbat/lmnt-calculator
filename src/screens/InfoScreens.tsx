@@ -40,10 +40,9 @@ export function AboutScreen() {
     <main className="screen">
       <TopBar title="About" back={paths.more()} backLabel="Back to More" />
       <p>
-        LMNT Calculator helps you scale and mix a homemade electrolyte drink powder, weigh it one ingredient at a
-        time, and see what each serving costs. The recipes and ingredient prices are built in, so the app is read-only;
-        the only things you change are your batch log and settings. It is a personal, non-commercial project: no ads, no accounts, and
-        nothing leaves your phone.
+        Scale and mix a homemade electrolyte powder, one ingredient at a time, and see what each serving costs. The
+        recipes and prices are built in. A personal, non-commercial project: no ads, no accounts, and nothing leaves
+        your phone.
       </p>
 
       <Section title="Credit">
@@ -52,10 +51,8 @@ export function AboutScreen() {
           <a href={LMNT_ARTICLE} target="_blank" rel="noopener noreferrer">
             the best homemade electrolyte drink for dehydration
           </a>
-          .
-        </p>
-        <p>
-          <a className="btn ghost" href={LMNT_SHOP} target="_blank" rel="noopener noreferrer">
+          .{' '}
+          <a href={LMNT_SHOP} target="_blank" rel="noopener noreferrer">
             Buy the real thing
           </a>
         </p>
@@ -63,7 +60,7 @@ export function AboutScreen() {
 
       <Section title="Disclaimer">
         <div id="disclaimer">
-          <ul className="plain-list">
+          <ul className="plain-list compact">
             <li>This is not medical advice. Each serving has about 1,000 mg of sodium.</li>
             <li>
               Check with a doctor first if you have kidney disease, high blood pressure, or heart failure, are pregnant,
@@ -83,7 +80,6 @@ export function AboutScreen() {
         <p className="muted">Coming soon: the scale, vials and tools I use.</p>
       </Section>
 
-      <p className="legal">Version {__APP_VERSION__}</p>
     </main>
   );
 }

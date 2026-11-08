@@ -716,3 +716,212 @@ input[aria-invalid='true'] {
   margin-top: 0;
   font-variant-numeric: tabular-nums;
 }
+
+/* Fit the calculator on one phone screen (2026-11-08 phone test). */
+
+.info-text {
+  display: block;
+}
+
+.topbar {
+  margin-bottom: 8px;
+}
+
+.topbar.banded {
+  padding: 4px 8px;
+}
+
+.section {
+  margin: 12px 0;
+}
+
+.section h2 {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+}
+
+.legal {
+  margin: 12px 0 4px;
+}
+
+.size-block {
+  margin: 4px 0 8px;
+}
+
+.size-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.size-row .segmented button {
+  padding: 0 12px;
+}
+
+.size-row .field {
+  flex: 1;
+  min-width: 84px;
+  margin: 0;
+}
+
+.size-row .input-wrap.big input {
+  min-height: 48px;
+  padding: 4px 10px;
+  font-size: 1.5rem;
+}
+
+.size-block .summary {
+  margin: 6px 0 0;
+  font-size: 0.95rem;
+}
+
+.start-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.start-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.start-row .btn.big {
+  flex: 1;
+  width: auto;
+  min-height: 52px;
+}
+
+.share-btn {
+  flex: none;
+  min-height: 52px;
+}
+
+.line {
+  padding: 7px 0;
+}
+
+.line-name {
+  font-size: 1rem;
+}
+
+.line-name .line-sub {
+  font-size: 0.8rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.line-amount {
+  font-size: 1.3rem;
+}
+
+.summary-card {
+  margin: 12px 0 8px;
+  padding: 8px 12px;
+}
+
+.summary-row {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+}
+
+.summary-row .info-btn {
+  min-height: 32px;
+  min-width: 32px;
+}
+
+.chips-label {
+  align-self: center;
+  color: var(--text-2);
+  font-size: 0.8rem;
+}
+
+.summary-row .info-btn {
+  vertical-align: middle;
+}
+
+.summary-card .chips {
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+
+.summary-card .chips .chip {
+  padding: 3px 7px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+/* Settings rows: label on the left, control on the right. */
+
+.set-row,
+.field.inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin: 8px 0;
+}
+
+.set-label {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+.set-row .info-btn,
+.set-label .info-btn {
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.field.inline .field-label {
+  flex: 1;
+}
+
+.field.inline .input-wrap {
+  flex: none;
+  width: 110px;
+}
+
+.field.inline .info-text {
+  flex-basis: 100%;
+}
+
+.set-row .info-text {
+  flex-basis: 100%;
+}
+
+.set-row .segmented button {
+  min-height: 40px;
+  padding: 0 12px;
+}
+
+.actions.row.tight {
+  margin: 8px 0;
+}
+
+.plain-list.compact {
+  font-size: 0.92rem;
+}
+
+.plain-list.compact li {
+  margin: 4px 0;
+}
+
+.cards.tight {
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.ingredient-card {
+  gap: 2px;
+  padding: 9px 14px;
+}
+
+.ingredient-card .line-sub {
+  font-size: 0.85rem;
+}

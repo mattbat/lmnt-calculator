@@ -135,27 +135,27 @@ function SettingsBody({ settings }: { settings: Settings }) {
       <TopBar title="Settings" back={paths.more()} backLabel="Back to More" />
       <BackupReminder />
 
-      <Section title="Units">
-        <Segmented<WeightUnit>
-          label="Weight unit"
-          value={settings.weightUnit}
-          onChange={(weightUnit) => void updateSettings({ weightUnit })}
-          options={[
-            { value: 'g', label: 'Grams' },
-            { value: 'oz', label: 'Ounces' },
-          ]}
-        />
-      </Section>
-
       <Section title="Mixing">
-        <div className="field">
-          <span className="field-label">
+        <div className="set-row">
+          <span className="set-label">Units</span>
+          <Segmented<WeightUnit>
+            label="Weight unit"
+            value={settings.weightUnit}
+            onChange={(weightUnit) => void updateSettings({ weightUnit })}
+            options={[
+              { value: 'g', label: 'Grams' },
+              { value: 'oz', label: 'Ounces' },
+            ]}
+          />
+        </div>
+        <div className="set-row">
+          <span className="set-label">
             <span id="precision-label">Scale precision</span>
+            <Info label="scale precision">
+              The smallest step your scale shows. Amounts are rounded to it, and amounts under 10 steps get a
+              low-precision warning.
+            </Info>
           </span>
-          <Info label="scale precision">
-            The smallest step your scale shows. Amounts are rounded to it, and amounts under 10 steps get a low-precision
-            warning.
-          </Info>
           <Segmented<ScalePrecision>
             label="Scale precision"
             value={settings.scalePrecision}
@@ -168,18 +168,21 @@ function SettingsBody({ settings }: { settings: Settings }) {
           />
         </div>
         <NumField
+          inline
           label="Servings per vial"
           value={settings.servingsPerVial}
           onValue={(v) => v !== undefined && Number.isInteger(v) && v >= 1 && void updateSettings({ servingsPerVial: v })}
           min={1}
         />
         <NumField
+          inline
           label="Default batch (servings)"
           value={settings.defaultServings}
           onValue={(v) => v !== undefined && v > 0 && void updateSettings({ defaultServings: v })}
           min={0.0001}
         />
         <NumField
+          inline
           label="Retail price per stick"
           value={settings.retailPricePerServing}
           onValue={(v) => v !== undefined && v >= 0 && void updateSettings({ retailPricePerServing: v })}
@@ -187,36 +190,37 @@ function SettingsBody({ settings }: { settings: Settings }) {
           min={0}
           info="What you would pay for one ready-made stick. Savings are this minus your cost per serving."
         />
-      </Section>
-
-      <Section title="Appearance">
-        <Segmented<ThemeSetting>
-          label="Theme"
-          value={settings.theme}
-          onChange={(theme) => void updateSettings({ theme })}
-          options={[
-            { value: 'system', label: 'Match phone' },
-            { value: 'light', label: 'Light' },
-            { value: 'dark', label: 'Dark' },
-          ]}
-        />
+        <div className="set-row">
+          <span className="set-label">Theme</span>
+          <Segmented<ThemeSetting>
+            label="Theme"
+            value={settings.theme}
+            onChange={(theme) => void updateSettings({ theme })}
+            options={[
+              { value: 'system', label: 'Auto' },
+              { value: 'light', label: 'Light' },
+              { value: 'dark', label: 'Dark' },
+            ]}
+          />
+        </div>
       </Section>
 
       <Section title="Backup and restore">
-        <p className="muted">
-          Your data lives only on this device. If the app is removed or the browser's site data is cleared, it is gone.
+        <p className="muted small">
+          Your data lives only on this device, so back it up now and then.
           {settings.lastBackupAt ? ` Last backup: ${formatDateTime(settings.lastBackupAt)}.` : ' You have not made a backup yet.'}
         </p>
-        <div className="actions">
+        <div className="actions row tight">
           <button type="button" className="btn" onClick={() => void doBackup()}>
             Back up now
           </button>
           <label className="btn ghost file-btn">
-            Choose backup file
+            Restore…
             <input
               type="file"
               accept=".json,application/json"
               className="sr-only"
+              aria-label="Choose backup file"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 e.target.value = '';
@@ -235,18 +239,20 @@ function SettingsBody({ settings }: { settings: Settings }) {
       </Section>
 
       <Section title="App">
-        <p>
-          Version <span className="num">{__APP_VERSION__}</span> · built {__BUILD_TIME__}
-        </p>
-        <button type="button" className="btn ghost" onClick={() => void checkForUpdates()}>
-          Check for updates
-        </button>
+        <div className="set-row">
+          <span className="muted small">
+            Version <span className="num">{__APP_VERSION__}</span> · built {__BUILD_TIME__}
+          </span>
+          <button type="button" className="btn ghost small" onClick={() => void checkForUpdates()}>
+            Check for updates
+          </button>
+        </div>
         {updateMessage && <p role="status">{updateMessage}</p>}
-        <h3>Diagnostics</h3>
         <p className="muted small">
+          Diagnostics:{' '}
           {error
-            ? `Last error (${formatDateTime(error.at)}): ${error.message}${error.shown ? '' : ' (not shown)'}`
-            : 'No errors recorded.'}
+            ? `last error (${formatDateTime(error.at)}): ${error.message}${error.shown ? '' : ' (not shown)'}`
+            : 'no errors recorded.'}
         </p>
       </Section>
 
