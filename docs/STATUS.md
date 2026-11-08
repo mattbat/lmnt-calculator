@@ -18,7 +18,7 @@ Last updated: 2026-11-07 (after the first phone test: read-only app with built-i
 | T6 | ✅ | Versioned Dexie schema (`src/data/db.ts`): `version(2)` drops the recipes and ingredients tables, with a migration test from a real v1 database. |
 | T7 | ✅ | Update banner is manual ("Update" / "Later") and hidden on `#/mix/...`. |
 | T8 | ✅ | `pwaUpdate`, `UpdateBanner`, `InstallHint`, `useWakeLock`, `share.ts`, backup, error banner and Diagnostics (in Settings) are all used. |
-| T9 | 🟡 📱 | Designed and e2e-tested at 402 and 412 pt wide; real devices not yet tried. |
+| T9 | 🟡 📱 | Designed and e2e-tested at 402 and 412 pt wide. The app is a fixed-height frame with the tab bar as its bottom row, and main screens fit without scrolling (2026-11-08). On an installed iPhone app the height comes from the screen size (`src/viewport.ts`), because iOS reports every CSS height about 48pt short at launch; e2e simulates that. Re-check on the iPhone. |
 
 ## Calculator (§6)
 

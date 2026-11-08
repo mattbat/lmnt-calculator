@@ -6,9 +6,11 @@ import { UpdateBanner } from './components/UpdateBanner';
 import './styles.css';
 import './screens.css';
 import { applyTheme, followSystemTheme } from './theme';
+import { fitIosAppHeight } from './viewport';
 
 applyTheme();
 followSystemTheme();
+fitIosAppHeight();
 
 // No pinch zoom. Android honors user-scalable=no in index.html and touch-action
 // in styles.css; iOS ignores both for pinch, but cancelling Safari's
