@@ -4,6 +4,7 @@ import { App } from './App';
 import { ErrorBanner } from './components/ErrorBanner';
 import { UpdateBanner } from './components/UpdateBanner';
 import './styles.css';
+import './screens.css';
 import { applyTheme, followSystemTheme } from './theme';
 
 applyTheme();
