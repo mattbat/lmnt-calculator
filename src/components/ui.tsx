@@ -194,9 +194,13 @@ export function NumField({
   const id = useId();
   const [text, setText] = useState(value === undefined ? '' : plain(value, 6));
   const [seen, setSeen] = useState(value);
+  // While the box has focus, what the user typed wins. Saves echo back
+  // asynchronously, and a late echo of an earlier keystroke ("1" while the
+  // box already says "1.2") must not overwrite the text mid-typing.
+  const [focused, setFocused] = useState(false);
   if (value !== seen) {
     setSeen(value);
-    if (parseNum(text) !== value) setText(value === undefined ? '' : plain(value, 6));
+    if (!focused && parseNum(text) !== value) setText(value === undefined ? '' : plain(value, 6));
   }
   const bad = text.trim() !== '' && (parseNum(text) === undefined || (min !== undefined && (parseNum(text) ?? 0) < min));
   return (
@@ -212,6 +216,12 @@ export function NumField({
           value={text}
           disabled={disabled}
           aria-invalid={bad || undefined}
+          onFocus={() => setFocused(true)}
+          onBlur={() => {
+            setFocused(false);
+            // Show the saved value again if the text was left invalid or differs.
+            if (parseNum(text) !== value) setText(value === undefined ? '' : plain(value, 6));
+          }}
           onChange={(e) => {
             setText(e.target.value);
             const n = parseNum(e.target.value);
