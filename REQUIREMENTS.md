@@ -122,7 +122,7 @@ The spreadsheet uses 11.5 g potassium chloride per 30 servings (0.3833 g each). 
 | C4 | Every ingredient line shows the batch weight rounded to the scale precision, plus the per-serving weight. Rounding is applied for display only. Totals and cost use the unrounded values. |
 | C5 | **Totals:** batch weight, fill weight per vial, cost per batch, cost per serving, and savings compared with retail (per serving and per batch: (retail − cost per serving) × N). |
 | C6 | **Electrolytes per serving:** for each mineral, the sum over ingredients of grams per serving × fraction × 1000 (mg). Also shown as a share of the FDA daily value for sodium (2,300 mg) and potassium (4,700 mg). |
-| C7 | **Precision warning:** if any batch weight is less than 20× the scale precision (so rounding could be off by more than 5%), mark that line and suggest a bigger batch or a finer scale. Example: on a 0.1 g scale, 10 servings of Watermelon needs 1.2 g of stevia, which is fine. 1 serving needs 0.12 g, which gets a warning. |
+| C7 | **Precision warning:** if any batch weight is less than 10× the scale precision (rounding is off by up to half a step, so below 10× it could be off by more than 5%), mark that line and suggest a bigger batch or a finer scale. Example: on a 0.1 g scale, 10 servings of Watermelon needs 1.2 g of stevia, which is fine. 1 serving needs 0.12 g, which gets a warning. |
 | C8 | Changing the batch size or recipe updates everything instantly. Nothing needs saving. The last batch size used for each recipe is remembered. |
 | C9 | The calculation is one pure TypeScript module (`src/calc`) with no React, Dexie or DOM imports, so it can be tested on its own (Q-2). |
 

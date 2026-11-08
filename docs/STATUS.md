@@ -8,14 +8,14 @@ Last updated: 2026-11-07 (phase 1 scaffold done: app shell, tooling, CI; no calc
 
 | Area | IDs | Status |
 |------|-----|--------|
-| Platform | T1–T9 | 🟡 Shell only: PWA manifest, offline service worker (T4, e2e-tested), `/lmnt-calculator/` paths (T3), update banner held back in mixing mode (T7), shared modules copied (T8: `pwaUpdate`, `UpdateBanner`, `InstallHint`, `useWakeLock`, `share.ts`, error banner). Not yet: Dexie storage and persistent storage request (T5, T6), install/phone check 📱 (T1, T9). T2 needs the GitHub repo and Pages set up. |
-| Calculator | C1–C9 | ⬜ |
+| Platform | T1–T9 | 🟡 Shell only: PWA manifest, offline service worker (T4, e2e-tested), `/lmnt-calculator/` paths (T3), update banner held back in mixing mode (T7), shared modules copied (T8: `pwaUpdate`, `UpdateBanner`, `InstallHint`, `useWakeLock`, `share.ts`, error banner). Dexie storage with first-open seeding and a persistent storage request (T5), versioned schema (T6; `src/data/db.ts`, fake-indexeddb tests). Not yet: install/phone check 📱 (T1, T9). T2 needs the GitHub repo and Pages set up. |
+| Calculator | C1–C9 | 🟡 Engine done in `src/calc` (pure TS, example + property tests, ≥95% coverage): sizing by servings/vials/weight, rounding, totals, savings, minerals, precision warning, mixing order. Screen not built yet. |
 | Mixing mode | M1–M8 | ⬜ |
-| Batch log | L1–L6 | ⬜ |
+| Batch log | L1–L6 | 🟡 Data layer done in `src/data/repo.ts`: batch create/update/delete, notes and 1–5 rating, newest-first `useBatches(recipeId?)` filter, recipe snapshot stored. Screens not built yet. |
 | Disclaimer and credit | D1–D5 | ⬜ |
-| Sharing | SH1–SH5 | ⬜ |
-| Units | U1–U5 | ⬜ |
-| Backup | B1–B4 | ⬜ |
+| Sharing | SH1–SH5 | 🟡 Data layer done in `src/data/recipeLink.ts`: versioned `#r=` links (deflate-raw + base64url, plain fallback), no prices, validated decode with friendly errors, import with case-insensitive ingredient matching and Replace / Keep both ("Name (2)"). Typical link under 1,500 characters (tested). Share and Receive screens not built yet (SH2, SH3 UI, SH4). |
+| Units | U1–U5 | 🟡 Conversions, package-size parsing and teaspoon fractions done in `src/calc/units.ts`. Settings toggle, Measure helper (U3) and water guidance (U5) arrive with the screens. |
+| Backup | B1–B4 | 🟡 Data layer done in `src/data/backup.ts`: versioned export via `shareFile` (B1), Replace / Merge restore with a summary (B2), reminder helper (B3, UI pending), format check and migration hook (B4). Settings UI not built yet. |
 | Non-functional | N1–N4 | ⬜ |
 | Testing and CI | Q-1–Q-6 | 🟡 Harness done: `npm run check` (lint, types, unit tests with 80% / 95% `src/calc` coverage gates, build, Playwright on WebKit iPhone, Chromium Android and offline Chromium) (Q-1); CI workflow with deploy only from `main` (Q-6, not yet run on GitHub). Feature tests (calc property tests, screen e2e) arrive with later phases. |
 | Documentation | H-1–H-5 | ⬜ |
