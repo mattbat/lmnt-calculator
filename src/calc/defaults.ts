@@ -1,0 +1,140 @@
+import type { Ingredient, Recipe, Settings } from '../types';
+
+/** Default ingredients (REQUIREMENTS §5.1). */
+export const DEFAULT_INGREDIENTS: Ingredient[] = [
+  {
+    id: 'salt',
+    name: 'Redmond Real Salt',
+    group: 'base',
+    packageGrams: 737.0876,
+    packagePrice: 11.39,
+    minerals: { sodium: 0.38 },
+    gramsPerTsp: 5,
+    updatedAt: 0,
+  },
+  {
+    id: 'potassium-chloride',
+    name: 'Potassium chloride',
+    group: 'base',
+    packageGrams: 250,
+    packagePrice: 17.97,
+    minerals: { potassium: 0.524 },
+    gramsPerTsp: 5.75,
+    updatedAt: 0,
+  },
+  {
+    id: 'magnesium-malate',
+    name: 'Magnesium malate',
+    group: 'base',
+    packageGrams: 250,
+    packagePrice: 19.97,
+    minerals: { magnesium: 0.154 },
+    updatedAt: 0,
+  },
+  {
+    id: 'malic-acid',
+    name: 'Malic acid',
+    group: 'flavor',
+    packageGrams: 226.796,
+    packagePrice: 8.95,
+    minerals: {},
+    updatedAt: 0,
+  },
+  {
+    id: 'citric-acid',
+    name: 'Citric acid',
+    group: 'flavor',
+    packageGrams: 340,
+    packagePrice: 6.99,
+    minerals: {},
+    updatedAt: 0,
+  },
+  {
+    id: 'lemon-powder',
+    name: 'Lemon powder',
+    group: 'flavor',
+    packageGrams: 284,
+    packagePrice: 11.98,
+    minerals: {},
+    updatedAt: 0,
+  },
+  {
+    id: 'watermelon-powder',
+    name: 'Watermelon juice powder',
+    group: 'flavor',
+    packageGrams: 250,
+    packagePrice: 20.97,
+    minerals: {},
+    updatedAt: 0,
+  },
+  {
+    id: 'stevia',
+    name: 'Stevia',
+    group: 'flavor',
+    packageGrams: 113.398,
+    packagePrice: 15.99,
+    minerals: {},
+    updatedAt: 0,
+  },
+];
+
+/** Default recipes (REQUIREMENTS §5.2), grams per serving. */
+export const DEFAULT_RECIPES: Recipe[] = [
+  {
+    id: 'raw',
+    name: 'Raw',
+    color: '#64748b',
+    lines: [
+      { ingredientId: 'salt', gramsPerServing: 2.5 },
+      { ingredientId: 'potassium-chloride', gramsPerServing: 0.385 },
+      { ingredientId: 'magnesium-malate', gramsPerServing: 0.39 },
+    ],
+    sortOrder: 0,
+    builtIn: true,
+    updatedAt: 0,
+  },
+  {
+    id: 'lemon',
+    name: 'Lemon',
+    color: '#facc15',
+    lines: [
+      { ingredientId: 'salt', gramsPerServing: 2.5 },
+      { ingredientId: 'potassium-chloride', gramsPerServing: 0.385 },
+      { ingredientId: 'magnesium-malate', gramsPerServing: 0.39 },
+      { ingredientId: 'lemon-powder', gramsPerServing: 1 },
+      { ingredientId: 'citric-acid', gramsPerServing: 0.3 },
+      { ingredientId: 'stevia', gramsPerServing: 0.16 },
+    ],
+    sortOrder: 1,
+    builtIn: true,
+    updatedAt: 0,
+  },
+  {
+    id: 'watermelon',
+    name: 'Watermelon',
+    color: '#f43f5e',
+    lines: [
+      { ingredientId: 'salt', gramsPerServing: 2.5 },
+      { ingredientId: 'potassium-chloride', gramsPerServing: 0.385 },
+      { ingredientId: 'magnesium-malate', gramsPerServing: 0.39 },
+      { ingredientId: 'watermelon-powder', gramsPerServing: 1.3 },
+      { ingredientId: 'malic-acid', gramsPerServing: 0.6 },
+      { ingredientId: 'stevia', gramsPerServing: 0.12 },
+    ],
+    sortOrder: 2,
+    builtIn: true,
+    updatedAt: 0,
+  },
+];
+
+/** Default settings (REQUIREMENTS §5.3). */
+export const DEFAULT_SETTINGS: Settings = {
+  retailPricePerServing: 1.5,
+  scalePrecision: 0.01,
+  servingsPerVial: 1,
+  defaultServings: 30,
+  weightUnit: 'g',
+  showTeaspoons: false,
+  theme: 'system',
+  lastBatchSize: {},
+};
