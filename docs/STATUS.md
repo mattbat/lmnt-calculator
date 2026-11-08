@@ -67,7 +67,7 @@ Recipes (cards with name, cost per serving and electrolytes only), Calculator (S
 | D1 | ✅ | First-launch notice gates the app until acknowledged (`settings.disclaimerAcceptedAt`). |
 | D2 | ✅ | Footer on Recipes, Calculator, Mixing and Log entry; links to About. |
 | D3 | ✅ | Full text under More → About, with credit link to LMNT's article. |
-| D4 | ✅ | Own icon, colors and type. The icon is still the placeholder from phase 1. |
+| D4 | ✅ | Own icon, colors and type. Final icon chosen 2026-11-07: a white drop with an indigo lightning bolt on an indigo tile (`#4f46e5`); options explored are in `docs/icon-research/`. |
 | D5 | ✅ | A shared link opens the recipe's calculator, which has the footer; the notice gate runs first for anyone who hasn't seen it (e2e covers this). |
 
 ## Sharing (§11)
@@ -123,7 +123,7 @@ Recipes (cards with name, cost per serving and electrolytes only), Calculator (S
 | Look and themes | ✅ | Light and dark via CSS variables; recipe color on cards, headers and mixing screens (text color picked for contrast). 📱 Check contrast and Dynamic Type on a phone. |
 | Tap targets | ✅ | 44 px or more everywhere; 56 px or more in mixing mode. |
 | Safe areas, no zoom | ✅ | `viewport-fit=cover`, safe-area padding. |
-| Splash screen, final icon | 🟡 | Placeholder icon only. |
+| Splash screen, final icon | 🟡 | Final icon done (indigo drop and bolt). No designed splash screen yet; the app tint is still teal. |
 | H-1 | ✅ | User README (read-only built-in recipes, sharing a link, Not now). |
 | H-2 | ✅ | Developer README (stack, layout, setup, CI/CD, share link, backup format 2, formulas). |
 | H-3 | ✅ | Empty states for the log and the built-in lists. |

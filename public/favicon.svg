@@ -1,29 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- LMNT Calculator app icon: a droplet holding a salt crystal. Original artwork.
-       Full-bleed square: iOS and Android cut their own corner shape; the drawing
-       stays inside the central 60% so it survives a maskable crop.
+  <!-- LMNT Calculator app icon: a white droplet with an indigo lightning bolt
+       on an indigo tile (final choice "A1 indigo"; see docs/icon-research/).
+       Full-bleed square: iOS and Android cut their own corner shape. The drawing
+       stays inside the central safe zone so it survives a maskable crop.
        Run `npm run icons` after changing this file to regenerate the PNG icons. -->
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#2dd4bf"/>
-      <stop offset="1" stop-color="#0f766e"/>
-    </linearGradient>
-    <linearGradient id="drop" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff"/>
-      <stop offset="1" stop-color="#c8f5ee"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" fill="url(#bg)"/>
-  <!-- droplet -->
-  <path d="M256 104 C256 104 164 206 164 292 A92 92 0 0 0 348 292 C348 206 256 104 256 104 Z" fill="url(#drop)"/>
-  <!-- highlight -->
-  <path d="M206 288 C206 252 226 220 244 196" fill="none" stroke="#ffffff" stroke-opacity=".9" stroke-width="12" stroke-linecap="round"/>
-  <!-- salt crystal: a small cube seen at an angle -->
-  <g transform="translate(256 308)">
-    <path d="M0 -44 L38 -22 L0 0 L-38 -22 Z" fill="#5eead4"/>
-    <path d="M-38 -22 L0 0 L0 44 L-38 22 Z" fill="#14b8a6"/>
-    <path d="M38 -22 L0 0 L0 44 L38 22 Z" fill="#0f766e"/>
+  <rect width="512" height="512" fill="#4f46e5"/>
+  <g transform="scale(5.12)">
+    <path d="M50 16 C50 16 26 44 26 60 a24 24 0 0 0 48 0 C74 44 50 16 50 16Z" fill="#ffffff"/>
+    <polygon points="54,36 40,62 50,62 46,78 62,52 52,52" fill="#4f46e5"/>
   </g>
-  <!-- sparkle -->
-  <path d="M366 150 l8 20 l20 8 l-20 8 l-8 20 l-8 -20 l-20 -8 l20 -8 Z" fill="#ffffff" fill-opacity=".85"/>
 </svg>
