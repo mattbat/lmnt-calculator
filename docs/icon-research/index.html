@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Icon research</title>
+<style>
+  :root { --bg: #ffffff; --fg: #1f2933; --muted: #5b6770; --line: #e3e8ec; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #111418; --fg: #e8ecef; --muted: #9aa5ad; --line: #2a3138; } }
+  body { margin: 0; padding: 24px 16px 48px; background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 18px; margin: 32px 0 4px; }
+  p { margin: 0 0 12px; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 16px; border-top: 1px solid var(--line); padding-top: 16px; }
+  figure { margin: 0; text-align: center; }
+  figure svg { width: 100%; max-width: 104px; height: auto; display: block; margin: 0 auto 6px; }
+  figcaption { font-size: 12px; color: var(--muted); }
+  .final figcaption { color: var(--fg); font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <h1>LMNT Calculator icon research</h1>
+  <p>The options explored on 2026-11-07, kept for reference. The final choice is <strong>A1 in indigo</strong> (#4f46e5): a white drop with an indigo lightning bolt on an indigo tile. See README.md in this folder for the reasoning.</p>
+  <div id="rounds"></div>
+</main>
+<script>
+const DROP = 'M50 16 C50 16 26 44 26 60 a24 24 0 0 0 48 0 C74 44 50 16 50 16Z';
+const BOLT = '54,36 40,62 50,62 46,78 62,52 52,52';
+const tile = (bg, inner) => `<rect width="100" height="100" rx="22" fill="${bg}"/>${inner}`;
+const charged = (bg, drop, bolt) => tile(bg, `<path d="${DROP}" fill="${drop}"/><polygon points="${BOLT}" fill="${bolt}"/>`);
+const crystalDrop = (bg) => tile(bg, `<path d="${DROP}" fill="#fff"/><rect x="43" y="53" width="14" height="14" rx="2" fill="${bg}" transform="rotate(45 50 60)"/>`);
+
+const rounds = [
+  {
+    title: 'Round 1: ten concepts',
+    note: 'Matt liked 1 (droplet + crystal) and 5 (charged drop).',
+    items: [
+      ['1 Droplet + crystal', crystalDrop('#14b8a6')],
+      ['2 Vial', tile('#0f2a33', '<rect x="37" y="14" width="26" height="8" rx="3" fill="#2dd4bf"/><rect x="40" y="22" width="20" height="62" rx="10" fill="none" stroke="#fff" stroke-width="4"/><rect x="44" y="50" width="12" height="30" rx="6" fill="#2dd4bf"/>')],
+      ['3 Three ions', tile('#ccfbf1', `<path d="${DROP}" fill="#0d9488"/><circle cx="50" cy="48" r="6" fill="#fff"/><circle cx="41" cy="64" r="6" fill="#fff"/><circle cx="59" cy="64" r="6" fill="#fff"/>`)],
+      ['4 Salt cube', tile('#0f766e', '<polygon points="50,22 74,35 50,48 26,35" fill="#ccfbf1"/><polygon points="26,35 50,48 50,76 26,63" fill="#fff"/><polygon points="50,48 74,35 74,63 50,76" fill="#99f6e4"/>')],
+      ['5 Charged drop', charged('#0f2a33', '#2dd4bf', '#fff')],
+      ['6 Scoop', tile('#14b8a6', '<path d="M26 52 Q50 30 70 52Z" fill="#ccfbf1"/><path d="M24 52 a24 24 0 0 0 48 0Z" fill="#fff"/><rect x="70" y="48" width="20" height="8" rx="4" fill="#fff"/>')],
+      ['7 Crystal + wave', tile('#0e7490', '<polygon points="50,18 66,40 50,62 34,40" fill="#fff"/><path d="M20 76 q7.5 -9 15 0 t15 0 t15 0 t15 0" fill="none" stroke="#a5f3fc" stroke-width="6" stroke-linecap="round"/>')],
+      ['8 Hex lattice', tile('#0f2a33', '<polygon points="50,24 72,37 72,63 50,76 28,63 28,37" fill="none" stroke="#2dd4bf" stroke-width="7" stroke-linejoin="round"/><circle cx="50" cy="50" r="8" fill="#fff"/>')],
+      ['9 Shaker bottle', tile('#14b8a6', '<rect x="45" y="14" width="10" height="9" rx="2" fill="#0f2a33"/><rect x="36" y="22" width="28" height="12" rx="3" fill="#0f2a33"/><rect x="34" y="34" width="32" height="50" rx="9" fill="#fff"/><rect x="34" y="56" width="32" height="7" fill="#99f6e4"/>')],
+      ['10 Citrus drop', tile('#fef9c3', `<path d="${DROP}" fill="#0d9488"/><path d="M37 58 a13 13 0 0 0 26 0Z" fill="#facc15"/><path d="M50 58 L50 70 M50 58 L42 67 M50 58 L58 67" stroke="#fef9c3" stroke-width="2" fill="none"/>`)],
+    ],
+  },
+  {
+    title: 'Round 2: variations on 1 and 5, and five palettes',
+    note: 'Matt liked the watermelon color.',
+    items: [
+      ['1A Original', crystalDrop('#14b8a6')],
+      ['1B Outline drop', tile('#14b8a6', '<path d="M50 18 C50 18 28 45 28 60 a22 22 0 0 0 44 0 C72 45 50 18 50 18Z" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><rect x="43" y="53" width="14" height="14" rx="2" fill="#fff" transform="rotate(45 50 60)"/>')],
+      ['1C Salt cube', tile('#14b8a6', `<path d="${DROP}" fill="#fff"/><polygon points="50,48 61,54 50,60 39,54" fill="#5eead4"/><polygon points="39,54 50,60 50,72 39,66" fill="#14b8a6"/><polygon points="50,60 61,54 61,66 50,72" fill="#0f766e"/>`)],
+      ['1D Sprinkle', tile('#14b8a6', `<path d="${DROP}" fill="#fff"/><rect x="45" y="44" width="8" height="8" rx="1.5" fill="#14b8a6" transform="rotate(45 49 48)"/><rect x="37" y="60" width="8" height="8" rx="1.5" fill="#14b8a6" transform="rotate(45 41 64)"/><rect x="53" y="58" width="8" height="8" rx="1.5" fill="#14b8a6" transform="rotate(45 57 62)"/>`)],
+      ['1E Falling crystal', tile('#14b8a6', '<path d="M44 24 C44 24 22 50 22 64 a22 22 0 0 0 44 0 C66 50 44 24 44 24Z" fill="#fff"/><rect x="66" y="20" width="13" height="13" rx="2" fill="#fff" transform="rotate(45 72.5 26.5)"/>')],
+      ['5A Original', charged('#0f2a33', '#2dd4bf', '#fff')],
+      ['5B Reversed', charged('#14b8a6', '#0f2a33', '#2dd4bf')],
+      ['5C Outline drop', tile('#0f2a33', '<path d="M50 18 C50 18 28 45 28 60 a22 22 0 0 0 44 0 C72 45 50 18 50 18Z" fill="none" stroke="#2dd4bf" stroke-width="5" stroke-linejoin="round"/><polygon points="54,38 41,62 50,62 46,76 61,53 52,53" fill="#2dd4bf"/>')],
+      ['5D Bolt + crystal', tile('#0f2a33', '<path d="M46 22 C46 22 24 48 24 63 a22 22 0 0 0 44 0 C68 48 46 22 46 22Z" fill="#2dd4bf"/><polygon points="49,41 37,63 46,63 42,77 56,55 47,55" fill="#fff"/><rect x="67" y="19" width="12" height="12" rx="2" fill="#fff" transform="rotate(45 73 25)"/>')],
+      ['5E Light background', charged('#f0fdfa', '#0f2a33', '#2dd4bf')],
+      ['1 Teal', crystalDrop('#14b8a6')], ['1 Ocean', crystalDrop('#2563eb')], ['1 Lime', crystalDrop('#65a30d')], ['1 Watermelon', crystalDrop('#f43f5e')], ['1 Midnight', crystalDrop('#0f172a')],
+      ['5 Teal', charged('#0f2a33', '#2dd4bf', '#fff')], ['5 Ocean', charged('#0b1b3a', '#60a5fa', '#fff')], ['5 Lime', charged('#1a2e05', '#a3e635', '#1a2e05')], ['5 Watermelon', charged('#3b0a14', '#fb7185', '#fff')], ['5 Midnight', charged('#f8fafc', '#0f172a', '#fff')],
+    ],
+  },
+  {
+    title: 'Round 3: watermelon as background (A), drop (B) or bolt (C)',
+    note: 'Matt chose A1: watermelon background and bolt, white drop.',
+    items: [
+      ['A1 White drop', charged('#f43f5e', '#fff', '#f43f5e')], ['A2 Seed drop', charged('#f43f5e', '#2a0a12', '#fff')], ['A3 Rind drop', charged('#f43f5e', '#15803d', '#fff')], ['A4 Mint drop', charged('#f43f5e', '#bbf7d0', '#15803d')], ['A5 Cream drop', charged('#f43f5e', '#fff1f2', '#2a0a12')],
+      ['B1 Seed tile', charged('#2a0a12', '#f43f5e', '#fff')], ['B2 Rind tile', charged('#166534', '#f43f5e', '#fff')], ['B3 Cream tile', charged('#fff1f2', '#f43f5e', '#fff')], ['B4 Mint tile', charged('#dcfce7', '#f43f5e', '#166534')], ['B5 Navy tile', charged('#0f2a33', '#f43f5e', '#bbf7d0')],
+      ['C1 Seed + white', charged('#2a0a12', '#fff', '#f43f5e')], ['C2 Rind + white', charged('#166534', '#fff', '#f43f5e')], ['C3 Mint + rind', charged('#dcfce7', '#166534', '#f43f5e')], ['C4 Cream + seed', charged('#fff1f2', '#2a0a12', '#f43f5e')], ['C5 Navy + mint', charged('#0f2a33', '#bbf7d0', '#f43f5e')],
+    ],
+  },
+  {
+    title: 'Round 4: A1 in 25 colors (tile and bolt match, white drop)',
+    note: 'Final choice: Indigo. Light tiles (Lemon, Lime zest, Sky, Lavender, Coral) were too low-contrast with the white drop.',
+    items: [
+      ['Watermelon', '#f43f5e'], ['Coral', '#fb7185'], ['Raspberry', '#db2777'], ['Red', '#dc2626'], ['Crimson', '#be123c'],
+      ['Lemon', '#facc15'], ['Deep lemon', '#eab308'], ['Honey', '#f59e0b'], ['Tangerine', '#f97316'], ['Lime zest', '#a3e635'],
+      ['Lime', '#65a30d'], ['Mint', '#10b981'], ['Emerald', '#059669'], ['Teal', '#0d9488'], ['Forest', '#166534'],
+      ['Sky', '#38bdf8'], ['Ocean', '#0284c7'], ['Royal', '#2563eb'], ['Navy', '#1e3a8a'], ['Indigo', '#4f46e5'],
+      ['Lavender', '#a78bfa'], ['Violet', '#7c3aed'], ['Purple', '#9333ea'], ['Grape', '#6b21a8'], ['Fuchsia', '#c026d3'],
+    ].map(([name, c]) => [`${name} ${c}`, charged(c, '#fff', c), name === 'Indigo']),
+  },
+];
+
+const root = document.getElementById('rounds');
+for (const round of rounds) {
+  const items = round.items
+    .map(([label, inner, final]) => `<figure${final ? ' class="final"' : ''}><svg viewBox="0 0 100 100" role="img" aria-label="${label}">${inner}</svg><figcaption>${label}${final ? ' (final)' : ''}</figcaption></figure>`)
+    .join('');
+  root.insertAdjacentHTML('beforeend', `<h2>${round.title}</h2><p>${round.note}</p><div class="grid">${items}</div>`);
+}
+</script>
+</body>
+</html>

@@ -12,7 +12,7 @@ export type ThemePreference = 'dark' | 'light' | 'auto';
 export const THEME_KEY = 'lmnt-calculator.theme';
 
 /** Status bar and browser chrome colors, matching --bg in styles.css. */
-const CHROME = { dark: '#0e1a1d', light: '#f3faf9' } as const;
+const CHROME = { dark: '#12121f', light: '#f5f5fb' } as const;
 
 export function themePreference(): ThemePreference {
   try {
