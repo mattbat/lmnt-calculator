@@ -69,7 +69,8 @@ body {
 html,
 body,
 #root {
-  height: 100%;
+  /* --app-h is the screen height on an installed iPhone app (src/viewport.ts). */
+  height: var(--app-h, 100%);
   overflow: hidden;
   touch-action: pan-x pan-y;
 }
@@ -91,24 +92,20 @@ h1 {
   line-height: 1.15;
 }
 
-/* Shell */
-
-/* Shell: a full-height column. The tab bar is the last row, not position:
-   fixed; on iPhone Home Screen apps a fixed bottom bar can float above the
-   bottom edge at launch until the page is scrolled. */
+/* Shell: a full-height column with the tab bar as the last row. On an
+   installed iPhone app every CSS height can come up short at launch, so there
+   the height comes from the screen size instead (--app-h, src/viewport.ts). */
 .app {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  height: 100dvh;
+  height: var(--app-h, 100dvh);
   overflow: hidden;
 }
 
-/* Installed app: no browser toolbars, so the large viewport is the whole
-   screen, and it doesn't shrink at launch the way the dynamic one can. */
 @media (display-mode: standalone) {
   .app {
-    height: 100lvh;
+    height: var(--app-h, 100lvh);
   }
 }
 
