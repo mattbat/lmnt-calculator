@@ -97,7 +97,7 @@ describe('Calculator screen', () => {
   it('shows electrolytes per serving as a nutrition-style label, without totals or cost (C6)', async () => {
     await open();
     const label = screen.getByRole('region', { name: 'Electrolytes per serving' });
-    expect(label).toHaveTextContent('Per serving5.295 g');
+    expect(label).toHaveTextContent('Per serving 5.295 g% Daily Value*');
     expect(label).toHaveTextContent('Sodium 950 mg41%');
     expect(label).toHaveTextContent('Potassium 202 mg4%');
     expect(label).toHaveTextContent('Magnesium 60 mg14%');

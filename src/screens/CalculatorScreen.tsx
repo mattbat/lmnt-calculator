@@ -199,10 +199,11 @@ function CalculatorBody({
       <section className="nutri" aria-label="Electrolytes per serving">
         <h2 className="nutri-title">Electrolytes</h2>
         <p className="nutri-serving">
-          <span>Per serving</span>
-          <span className="num">{perServing(gramsPerServing(recipe), unit)}</span>
+          <span>
+            Per serving <span className="num">{perServing(gramsPerServing(recipe), unit)}</span>
+          </span>
+          <span className="nutri-dv">% Daily Value*</span>
         </p>
-        <p className="nutri-dv">% Daily Value*</p>
         <dl className="nutri-rows">
           {NUTRI_ROWS.map(([key, name]) => (
             <div key={key} className="nutri-row">
@@ -213,7 +214,7 @@ function CalculatorBody({
             </div>
           ))}
         </dl>
-        <p className="nutri-note">*Based on FDA adult daily values. Not an official nutrition label.</p>
+        <p className="nutri-note">*FDA adult daily values. Not an official nutrition label.</p>
       </section>
 
       <Footer />
