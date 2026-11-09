@@ -1,7 +1,8 @@
 import type { BatchSize, Ingredient, IngredientGroup, Mineral, Recipe, Settings } from '../types';
 import { roundToPrecision } from './units';
 
-export const DAILY_VALUE_MG = { sodium: 2300, potassium: 4700 } as const;
+/** FDA daily values for adults, in mg. */
+export const DAILY_VALUE_MG = { sodium: 2300, potassium: 4700, magnesium: 420 } as const;
 
 export interface BatchLine {
   ingredientId: string;
@@ -30,7 +31,7 @@ export interface BatchResult {
   /** mg per serving. */
   minerals: Record<Mineral, number>;
   /** Percent of daily value per serving. */
-  dailyValue: { sodium: number; potassium: number };
+  dailyValue: Record<Mineral, number>;
   leftoverGrams: number;
   missingIngredientIds: string[];
 }
@@ -133,6 +134,7 @@ export function calculateBatch(
     dailyValue: {
       sodium: (minerals.sodium / DAILY_VALUE_MG.sodium) * 100,
       potassium: (minerals.potassium / DAILY_VALUE_MG.potassium) * 100,
+      magnesium: (minerals.magnesium / DAILY_VALUE_MG.magnesium) * 100,
     },
     leftoverGrams,
     missingIngredientIds,

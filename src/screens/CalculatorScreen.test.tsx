@@ -94,21 +94,17 @@ describe('Calculator screen', () => {
     expect(screen.queryByText(/Low precision/)).not.toBeInTheDocument();
   });
 
-  it('shows a compact summary of totals, savings and electrolytes (C5, C6)', async () => {
+  it('shows electrolytes per serving as a nutrition-style label, without totals or cost (C6)', async () => {
     await open();
-    const card = screen.getByRole('region', { name: 'Summary' });
-    expect(card).toHaveTextContent('158.85 g');
-    expect(card).toHaveTextContent('30 × 5.30 g');
-    expect(card).toHaveTextContent('$7.41');
-    expect(card).toHaveTextContent('$0.25/serving');
-    expect(card).toHaveTextContent('saves $37.59 a batch');
-    await userEvent.setup().click(screen.getByRole('button', { name: 'About comparison price' }));
-    expect(card).toHaveTextContent('$1.25 a serving less than $1.50 per stick at retail');
-    expect(card).toHaveTextContent('Na 950 mg · 41%');
-    expect(card).toHaveTextContent('K 202 mg · 4%');
-    expect(card).toHaveTextContent('Mg 60 mg');
-    expect(screen.queryByText('Totals')).not.toBeInTheDocument();
-    expect(screen.queryByText('Electrolytes per serving')).not.toBeInTheDocument();
+    const label = screen.getByRole('region', { name: 'Electrolytes per serving' });
+    expect(label).toHaveTextContent('Per serving 5.295 g% Daily Value*');
+    expect(label).toHaveTextContent('Sodium 950 mg41%');
+    expect(label).toHaveTextContent('Potassium 202 mg4%');
+    expect(label).toHaveTextContent('Magnesium 60 mg14%');
+    expect(label).toHaveTextContent('Not an official nutrition label');
+    expect(screen.queryByText(/saves/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\/serving ·/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Summary' })).not.toBeInTheDocument();
   });
 
   it('puts Start mixing and Share before the Weigh out list', async () => {
@@ -117,7 +113,7 @@ describe('Calculator screen', () => {
     const share = screen.getByRole('button', { name: 'Share recipe' });
     const weigh = screen.getByRole('heading', { name: 'Weigh out' });
     const batch = screen.getByRole('region', { name: 'Batch size' });
-    const summary = screen.getByRole('region', { name: 'Summary' });
+    const summary = screen.getByRole('region', { name: 'Electrolytes per serving' });
     const before = (x: Node, y: Node) => Boolean(x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING);
     expect(before(batch, start)).toBe(true);
     expect(before(start, weigh)).toBe(true);
@@ -125,7 +121,7 @@ describe('Calculator screen', () => {
     expect(before(weigh, summary)).toBe(true);
   });
 
-  it('rounds vials up and notes the last, partial vial', async () => {
+  it('rounds vials up', async () => {
     const user = userEvent.setup();
     await updateSettings({ servingsPerVial: 4 });
     await open();
@@ -133,7 +129,6 @@ describe('Calculator screen', () => {
     await user.clear(input);
     await user.type(input, '10');
     expect(screen.getByText(/servings ·/)).toHaveTextContent('3 vials');
-    expect(screen.getByText(/last vial with 2 servings/)).toBeInTheDocument();
   });
 
   it('starts mixing and shares a link to the recipe page', async () => {

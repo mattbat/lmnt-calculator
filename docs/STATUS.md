@@ -18,7 +18,7 @@ Last updated: 2026-11-07 (after the first phone test: read-only app with built-i
 | T6 | ✅ | Versioned Dexie schema (`src/data/db.ts`): `version(2)` drops the recipes and ingredients tables, with a migration test from a real v1 database. |
 | T7 | ✅ | Update banner is manual ("Update" / "Later") and hidden on `#/mix/...`. |
 | T8 | ✅ | `pwaUpdate`, `UpdateBanner`, `InstallHint`, `useWakeLock`, `share.ts`, backup, error banner and Diagnostics (in Settings) are all used. |
-| T9 | 🟡 📱 | Designed and e2e-tested at 402 and 412 pt wide. The app is a fixed-height frame with the tab bar as its bottom row, and main screens fit without scrolling (2026-11-08). On an installed iPhone app the height comes from the screen size (`src/viewport.ts`), because iOS reports every CSS height about 48pt short at launch; e2e simulates that. Re-check on the iPhone. |
+| T9 | 🟡 📱 | Designed and e2e-tested at 402 and 412 pt wide. The app is a fixed-height frame with the tab bar as its bottom row, and main screens fit without scrolling (2026-11-08). On an installed iPhone app the height comes from the screen size (`src/viewport.ts`), because iOS reports every CSS height about 48pt short at launch; e2e simulates that. Titles start 16px below the status bar, outside the scroller, so they stay clear of iOS's haze under the clock (2026-11-09, as in next5); the update banner sits above the tab bar. Re-check on the iPhone. |
 
 ## Calculator (§6)
 
@@ -26,8 +26,8 @@ Last updated: 2026-11-07 (after the first phone test: read-only app with built-i
 |----|--------|-------|
 | C1–C3 | ✅ | Servings / Vials / Weight segmented control (leftover shown for weight). Component tests for each. |
 | C4 | ✅ | Batch weight rounded to precision for display, plus per-serving weight; cost uses unrounded values. |
-| C5 | ✅ | Compact Summary card: batch weight, vials × fill and batch cost in a row; cost per serving and savings (per serving and per batch) vs retail; the last, partial vial noted. |
-| C6 | ✅ | mg per serving as chips in the Summary card, with % daily value for sodium and potassium. |
+| C5 | ✅ | Totals and savings are still calculated, but no longer shown on the calculator (2026-11-09); the summary line shows servings and vials. |
+| C6 | ✅ | Nutrition-style Electrolytes label: serving size, then sodium, potassium and magnesium in mg with % daily value (2026-11-09). |
 | C7 | ✅ | "Low precision" chip on the calculator and in mixing mode. |
 | C8 | ✅ | Live recalculation; last batch size remembered per recipe (`lastBatchSize`). |
 | C9 | ✅ | All maths in `src/calc` (small helpers `vialPlan` and `pricePerGram` live there too). |
@@ -58,7 +58,7 @@ Last updated: 2026-11-07 (after the first phone test: read-only app with built-i
 
 ## Screens (§9)
 
-Recipes (cards with name, cost per serving and electrolytes only), Calculator (Start mixing and Share under the batch size, Weigh out, Summary card), Mixing mode, Ingredients (read-only: name, package size, price, price per gram, buy link if any), Log, Log entry, Settings, About (with Equipment placeholder) and Help are all built. Bottom tabs: Recipes · Log · Ingredients · More. ✅ Dropped 2026-11-07: Recipe editor, Receive recipe, ingredient editing (➖).
+Recipes (cards with name, cost per serving and electrolytes only), Calculator (Start mixing and Share under the batch size, Weigh out, Electrolytes label), Mixing mode, Ingredients (read-only: name, package size, price, price per gram, buy link if any; bases first, salt at the top), Log, Log entry, Settings, About (with Equipment placeholder) and Help are all built. Bottom tabs: Recipes · Log · Ingredients · More. ✅ Dropped 2026-11-07: Recipe editor, Receive recipe, ingredient editing (➖).
 
 ## Disclaimer and credit (§10)
 

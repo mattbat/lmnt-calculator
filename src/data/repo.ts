@@ -96,7 +96,10 @@ export async function setLastBatchSize(recipeId: string, size: BatchSize): Promi
 
 /** Built-in recipes, sorted for the Recipes list. They come from code, so every update ships new values. */
 const RECIPES: Recipe[] = [...DEFAULT_RECIPES].sort((a, b) => a.sortOrder - b.sortOrder);
-const INGREDIENTS: Ingredient[] = [...DEFAULT_INGREDIENTS].sort((a, b) => a.name.localeCompare(b.name));
+/** Bases first, then flavors, each in the built-in order (salt first). */
+const INGREDIENTS: Ingredient[] = [...DEFAULT_INGREDIENTS].sort(
+  (a, b) => Number(a.group === 'flavor') - Number(b.group === 'flavor'),
+);
 
 export function useRecipes(): Recipe[] {
   return RECIPES;

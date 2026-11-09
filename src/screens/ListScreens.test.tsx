@@ -87,6 +87,15 @@ describe('Ingredients screen', () => {
     expect(screen.getByText(/Built-in prices/)).toBeInTheDocument();
     expect(screen.getByText('Stevia').closest('li')).toHaveTextContent('Flavor');
   });
+
+  it('lists bases first, salt at the top, then flavors', async () => {
+    render(<IngredientsScreen />);
+    await screen.findByText('Redmond Real Salt');
+    const groups = screen.getAllByRole('listitem').map((li) => (li.textContent!.includes('Base') ? 'base' : 'flavor'));
+    expect(screen.getAllByRole('listitem')[0]).toHaveTextContent('Redmond Real Salt');
+    expect(groups).toEqual([...groups].sort());
+    expect(groups.filter((g) => g === 'base')).toHaveLength(3);
+  });
 });
 
 describe('Log screens', () => {

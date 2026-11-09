@@ -2,20 +2,27 @@ import { useMemo, useState } from 'react';
 import {
   calculateBatch,
   formatWeight,
+  gramsPerServing,
   gramsToOunces,
   ouncesToGrams,
   roundToPrecision,
   vialPlan,
 } from '../calc';
-import { Chip, Footer, Info, Loading, NumField, Section, Segmented, TopBar } from '../components/ui';
+import { Chip, Footer, Loading, NumField, Section, Segmented, TopBar } from '../components/ui';
 import { recipePageUrl, shareLink } from '../data/share';
 import { setLastBatchSize, updateSettings, useIngredients, useRecipe, useSettings } from '../data/repo';
-import { mg, money, perServing } from '../format';
+import { mg, perServing } from '../format';
 import { clearMixSession, hasMixSession } from '../mixSession';
 import { navigate, paths } from '../router';
-import type { BatchSize, Ingredient, Recipe, Settings } from '../types';
+import type { BatchSize, Ingredient, Mineral, Recipe, Settings } from '../types';
 
 type Mode = BatchSize['mode'];
+
+const NUTRI_ROWS: [Mineral, string][] = [
+  ['sodium', 'Sodium'],
+  ['potassium', 'Potassium'],
+  ['magnesium', 'Magnesium'],
+];
 
 const MODE_LABEL: Record<Mode, string> = { servings: 'Servings', vials: 'Vials', weight: 'Weight' };
 
@@ -189,48 +196,25 @@ function CalculatorBody({
         )}
       </Section>
 
-      <section className="summary-card" aria-label="Summary">
-        <dl className="triple">
-          <div>
-            <dd className="num">{fmt(result.totalGrams)}</dd>
-            <dt>batch</dt>
-          </div>
-          <div>
-            <dd className="num">
-              {plan.totalVials} × {fmt(result.fillGramsPerVial)}
-            </dd>
-            <dt>{plan.totalVials === 1 ? 'vial' : 'vials'}</dt>
-          </div>
-          <div>
-            <dd className="num">{money(result.costPerBatch)}</dd>
-            <dt>batch</dt>
-          </div>
+      <section className="nutri" aria-label="Electrolytes per serving">
+        <h2 className="nutri-title">Electrolytes</h2>
+        <p className="nutri-serving">
+          <span>
+            Per serving <span className="num">{perServing(gramsPerServing(recipe), unit)}</span>
+          </span>
+          <span className="nutri-dv">% Daily Value*</span>
+        </p>
+        <dl className="nutri-rows">
+          {NUTRI_ROWS.map(([key, name]) => (
+            <div key={key} className="nutri-row">
+              <dt>
+                <strong>{name}</strong> <span className="num">{mg(result.minerals[key])}</span>
+              </dt>
+              <dd className="num">{Math.round(result.dailyValue[key])}%</dd>
+            </div>
+          ))}
         </dl>
-        <p className="summary-row">
-          <strong className="num">{money(result.costPerServing)}</strong>/serving · saves{' '}
-          <strong className="num">{money(result.savingsPerBatch)}</strong> a batch
-          <Info label="comparison price">
-            That's <span className="num">{money(result.savingsPerServing)}</span> a serving less than{' '}
-            {money(settings.retailPricePerServing)} per stick at retail. Change the retail price in Settings.
-          </Info>
-        </p>
-        <p className="chips">
-          <span className="chips-label">Per serving</span>
-          <Chip tone="info">
-            Na {mg(result.minerals.sodium)} · {Math.round(result.dailyValue.sodium)}%
-          </Chip>
-          <Chip tone="info">
-            K {mg(result.minerals.potassium)} · {Math.round(result.dailyValue.potassium)}%
-          </Chip>
-          <Chip tone="info">Mg {mg(result.minerals.magnesium)}</Chip>
-        </p>
-        {plan.partialServings > 0 && (
-          <p className="hint">
-            {plan.totalVials - 1} full {plan.totalVials - 1 === 1 ? 'vial' : 'vials'}, plus a last vial with{' '}
-            {Number(plan.partialServings.toFixed(2))} {plan.partialServings === 1 ? 'serving' : 'servings'} (
-            {fmt(plan.partialGrams)}).
-          </p>
-        )}
+        <p className="nutri-note">*FDA adult daily values. Not an official nutrition label.</p>
       </section>
 
       <Footer />

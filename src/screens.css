@@ -183,7 +183,7 @@ a.btn {
 }
 
 .gate {
-  padding-top: calc(var(--safe-top) + 32px);
+  padding-top: 32px;
 }
 
 .cards {
@@ -666,45 +666,6 @@ input[aria-invalid='true'] {
   color: var(--text);
 }
 
-.summary-card {
-  margin: 16px 0;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-
-.summary-card h2 {
-  margin: 0 0 6px;
-  font-size: 1rem;
-  color: var(--text-2);
-}
-
-.triple {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin: 0;
-  text-align: center;
-}
-
-.triple dd {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.triple dt {
-  color: var(--text-2);
-  font-size: 0.8rem;
-}
-
-.summary-row {
-  margin: 8px 0 0;
-  font-size: 0.95rem;
-}
-
 .chips {
   display: flex;
   flex-wrap: wrap;
@@ -801,7 +762,7 @@ input[aria-invalid='true'] {
 }
 
 .line {
-  padding: 7px 0;
+  padding: 5px 0;
 }
 
 .line-name {
@@ -816,42 +777,6 @@ input[aria-invalid='true'] {
 
 .line-amount {
   font-size: 1.3rem;
-}
-
-.summary-card {
-  margin: 12px 0 8px;
-  padding: 8px 12px;
-}
-
-.summary-row {
-  margin: 6px 0 0;
-  font-size: 0.9rem;
-}
-
-.summary-row .info-btn {
-  min-height: 32px;
-  min-width: 32px;
-}
-
-.chips-label {
-  align-self: center;
-  color: var(--text-2);
-  font-size: 0.8rem;
-}
-
-.summary-row .info-btn {
-  vertical-align: middle;
-}
-
-.summary-card .chips {
-  flex-wrap: nowrap;
-  gap: 4px;
-}
-
-.summary-card .chips .chip {
-  padding: 3px 7px;
-  font-size: 0.78rem;
-  white-space: nowrap;
 }
 
 /* Settings rows: label on the left, control on the right. */
@@ -924,4 +849,72 @@ input[aria-invalid='true'] {
 
 .ingredient-card .line-sub {
   font-size: 0.85rem;
+}
+
+/* Electrolytes per serving, styled after a nutrition label (not a real one). */
+
+.nutri {
+  margin: 8px 0 4px;
+  padding: 4px 10px 6px;
+  border: 2px solid var(--text);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.nutri-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.nutri-serving {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding-bottom: 2px;
+  border-bottom: 6px solid var(--text);
+  font-weight: 700;
+}
+
+.nutri-serving {
+  align-items: baseline;
+}
+
+.nutri-dv {
+  font-size: 0.8rem;
+}
+
+.nutri-rows {
+  margin: 0;
+  border-bottom: 4px solid var(--text);
+}
+
+.nutri-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 1px 0;
+}
+
+.nutri-row + .nutri-row {
+  border-top: 1px solid var(--text);
+}
+
+.nutri-row dt,
+.nutri-row dd {
+  margin: 0;
+}
+
+.nutri-row dd {
+  font-weight: 700;
+}
+
+.nutri-note {
+  margin: 3px 0 0;
+  color: var(--text-2);
+  font-size: 0.7rem;
+  line-height: 1.3;
 }
