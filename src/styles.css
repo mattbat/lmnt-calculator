@@ -101,6 +101,9 @@ h1 {
   height: 100vh;
   height: var(--app-h, 100dvh);
   overflow: hidden;
+  /* The status bar band sits outside the scroller, so scrolled content never
+     slides up under the clock and battery. */
+  padding-top: var(--safe-top);
 }
 
 @media (display-mode: standalone) {
@@ -116,8 +119,10 @@ h1 {
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  /* Content stays in a centered 528px column; the scrollbar stays at the edge. */
-  padding: calc(var(--safe-top) + 12px) max(calc(var(--safe-right) + 16px), calc((100% - 528px) / 2)) 20px
+  /* Content stays in a centered 528px column; the scrollbar stays at the edge.
+     16px under the status bar, as in next5: iOS draws a soft haze just below
+     the clock and battery, and titles closer than that look blurry. */
+  padding: 16px max(calc(var(--safe-right) + 16px), calc((100% - 528px) / 2)) 20px
     max(calc(var(--safe-left) + 16px), calc((100% - 528px) / 2));
 }
 
@@ -224,8 +229,10 @@ h1 {
 }
 
 .update-banner {
+  /* Near the bottom, above the tab bar: pinned near the top it sat in the
+     status bar haze and looked blurry (same fix as next5). */
   position: fixed;
-  top: calc(var(--safe-top) + 8px);
+  bottom: calc(var(--safe-bottom) + var(--tabbar-h) + 12px);
   left: 12px;
   right: 12px;
   z-index: 30;

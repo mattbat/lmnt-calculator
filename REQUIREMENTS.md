@@ -123,8 +123,8 @@ The spreadsheet uses 11.5 g potassium chloride per 30 servings (0.3833 g each). 
 | C2 | **Batch size by vials:** enter V vials. N = V × servings per vial. |
 | C3 | **Batch size by total weight:** enter W grams of mix. N = floor(W ÷ grams per serving), and the app shows the leftover powder. |
 | C4 | Every ingredient line shows the batch weight rounded to the scale precision, plus the per-serving weight. Rounding is applied for display only. Totals and cost use the unrounded values. |
-| C5 | **Totals:** batch weight, fill weight per vial, cost per batch, cost per serving, and savings compared with retail (per serving and per batch: (retail − cost per serving) × N). Shown in one compact **Summary** card (decided 2026-11-07): batch weight, vials × fill, and batch cost in a row; then cost per serving and the savings; then the electrolytes. |
-| C6 | **Electrolytes per serving:** for each mineral, the sum over ingredients of grams per serving × fraction × 1000 (mg). Also shown as a share of the FDA daily value for sodium (2,300 mg) and potassium (4,700 mg), as chips in the Summary card. |
+| C5 | **Totals:** batch weight, fill weight per vial, cost per batch, cost per serving, and savings compared with retail are still calculated, but the calculator no longer shows a totals or cost card (decided 2026-11-09). The summary line under the batch size shows servings and vials. |
+| C6 | **Electrolytes per serving:** for each mineral, the sum over ingredients of grams per serving × fraction × 1000 (mg), plus its share of the FDA daily value (sodium 2,300 mg, potassium 4,700 mg, magnesium 420 mg). Shown as a nutrition-style label (bold rules, serving size, mg and % DV per row) marked as not an official nutrition label. |
 | C7 | **Precision warning:** if any batch weight is less than 10× the scale precision (rounding is off by up to half a step, so below 10× it could be off by more than 5%), mark that line and suggest a bigger batch or a finer scale. Example: on a 0.1 g scale, 10 servings of Watermelon needs 1.2 g of stevia, which is fine. 1 serving needs 0.12 g, which gets a warning. |
 | C8 | Changing the batch size or recipe updates everything instantly. Nothing needs saving. The last batch size used for each recipe is remembered. |
 | C9 | The calculation is one pure TypeScript module (`src/calc`) with no React, Dexie or DOM imports, so it can be tested on its own (Q-2). |
@@ -159,7 +159,7 @@ The spreadsheet uses 11.5 g potassium chloride per 30 servings (0.3833 g each). 
 2. **Calculator:** for the chosen recipe. Top to bottom: header with the name; batch size (servings / vials / weight); **Start mixing** (with **Share recipe** as a smaller secondary button); the weigh-out list; the compact **Summary** card; the D2 footer. (No **Edit recipe**: dropped.)
 3. **Mixing mode** (§7).
 4. ~~**Recipe editor**~~ *Dropped 2026-11-07: recipes are built in and read-only.*
-5. **Ingredients:** a read-only price list: name, package size, price, price per gram, and buy link if there is one. No edit, add or delete.
+5. **Ingredients:** a read-only price list: name, package size, price, price per gram, and buy link if there is one. No edit, add or delete. Bases come first (salt at the top), then flavors.
 6. **Log** (§8) and **Log entry**.
 7. ~~**Receive recipe**~~ *Dropped 2026-11-07.* A shared link opens the recipe's own page (§11).
 8. **Settings:** units, scale precision, servings per vial, retail comparison price, theme, backup and restore, version, and check for updates.
@@ -260,6 +260,8 @@ Navigation: a bottom tab bar with **Recipes · Log · Ingredients · More** (Set
 | 2026-11-07 | The equipment page is a placeholder until Matt sends the list. |
 | 2026-11-07 | The app icon is a white drop with a lightning bolt on indigo (`#4f46e5`). Rejected options are kept in `docs/icon-research/`. |
 | 2026-11-07 | The app's accent and background tints change from teal to indigo to match the icon. |
+| 2026-11-09 | Titles start 16px below the status bar, and the status bar band sits outside the scrolling area, so nothing sits in the haze iOS draws under the clock (as in next5). The update banner moved to the bottom, above the tab bar. |
+| 2026-11-09 | The calculator's Summary card is replaced by a nutrition-style **Electrolytes** label (mg and % daily value per serving); batch weight, vial fill, cost and savings are no longer shown (C5, C6). Ingredients lists bases first, salt at the top. |
 | 2026-11-08 | Less scrolling: the app is a fixed-height frame with the tab bar as its bottom row (not position: fixed, which floated above the bottom on iPhone at launch). The calculator, Settings, About and Ingredients are compacted to fit an iPhone 17 screen, and pinch zoom is off. |
 | 2026-11-08 | On an installed iPhone app the frame height comes from the screen size, not CSS: at launch iOS reports every CSS height (%, vh, dvh, lvh) about 48pt short, which cut off the tab bar. |
 | 2026-11-07 | **Direction change after the first phone test: the app is read-only with built-in recipes.** Recipes and ingredient prices come from `src/calc/defaults.ts`, so an app update changes them everywhere. Dexie `version(2)` drops the recipes and ingredients tables. |

@@ -22,9 +22,9 @@ test('make a 30-serving Watermelon batch, log it with notes, and make it again (
   await expect(page.getByTestId('amount-stevia')).toHaveText('3.60 g');
   await expect(page.getByText('Not medical advice · Not affiliated with LMNT.')).toBeVisible();
 
-  const summary = page.getByRole('region', { name: 'Summary' });
-  await expect(summary).toContainText('158.85 g');
-  await expect(summary).toContainText('Na 950 mg · 41%');
+  const label = page.getByRole('region', { name: 'Electrolytes per serving' });
+  await expect(label).toContainText('Sodium 950 mg');
+  await expect(label).toContainText('41%');
 
   await page.getByRole('button', { name: 'Start mixing' }).click();
   await expect(page.getByRole('heading', { name: 'Redmond Real Salt' })).toBeVisible();

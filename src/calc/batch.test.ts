@@ -69,6 +69,7 @@ describe('spreadsheet numbers', () => {
       expect(r.minerals.magnesium).toBeCloseTo(60.06, 1);
       expect(r.dailyValue.sodium).toBeCloseTo((950 / 2300) * 100, 6);
       expect(r.dailyValue.potassium).toBeCloseTo((201.74 / 4700) * 100, 2);
+      expect(r.dailyValue.magnesium).toBeCloseTo((60.06 / 420) * 100, 1);
     }
   });
 

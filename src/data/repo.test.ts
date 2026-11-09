@@ -134,8 +134,12 @@ describe('hooks', () => {
     expect(renderHook(() => useRecipe(undefined)).result.current).toBeUndefined();
     const ingredients = renderHook(() => useIngredients()).result.current;
     expect(ingredients).toHaveLength(DEFAULT_INGREDIENTS.length);
-    const names = ingredients.map((i) => i.name);
-    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+    // Bases first, then flavors, each in the built-in order (salt first).
+    expect(ingredients.map((i) => i.id)).toEqual([
+      ...DEFAULT_INGREDIENTS.filter((i) => i.group === 'base'),
+      ...DEFAULT_INGREDIENTS.filter((i) => i.group === 'flavor'),
+    ].map((i) => i.id));
+    expect(ingredients[0]?.id).toBe('salt');
   });
 
   it('serve live settings', async () => {
