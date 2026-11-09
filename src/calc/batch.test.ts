@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { calculateBatch, gramsPerServing, mixingOrder, resolveServings } from './batch';
+import { calculateBatch, gramsPerServing, mixingOrder, normalizeBatchSize, resolveServings } from './batch';
 import { DEFAULT_INGREDIENTS, DEFAULT_RECIPES, DEFAULT_SETTINGS } from './defaults';
 import type { BatchSize, Ingredient, Recipe, Settings } from '../types';
 
@@ -56,7 +56,7 @@ describe('spreadsheet numbers', () => {
     const r = run('watermelon', { mode: 'servings', servings: 30 });
     expect(r.costPerServing).toBeCloseTo(0.25, 2);
     expect(r.totalGrams).toBeCloseTo(158.85, 6);
-    expect(r.fillGramsPerVial).toBeCloseTo(5.295, 9);
+    expect(r.gramsPerServing).toBeCloseTo(5.295, 9);
     expect(r.savingsPerServing).toBeCloseTo(1.5 - r.costPerServing, 9);
     expect(r.savingsPerBatch).toBeCloseTo(r.savingsPerServing * 30, 9);
   });
@@ -73,26 +73,24 @@ describe('spreadsheet numbers', () => {
     }
   });
 
-  it('batch weights and vial fill', () => {
-    const r = run('lemon', { mode: 'servings', servings: 30 }, { servingsPerVial: 2 });
+  it('batch weights and grams per serving (one vial)', () => {
+    const r = run('lemon', { mode: 'servings', servings: 30 });
     const salt = r.lines.find((l) => l.ingredientId === 'salt')!;
     expect(salt.batchGrams).toBeCloseTo(75, 9);
-    expect(r.vials).toBe(15);
-    expect(r.fillGramsPerVial).toBeCloseTo(9.47, 9);
+    expect(r.gramsPerServing).toBeCloseTo(4.735, 9);
   });
 });
 
 describe('batch sizing', () => {
-  it('servings, vials and weight modes', () => {
-    expect(resolveServings({ mode: 'servings', servings: 10 }, 3, 2)).toEqual({ servings: 10, vials: 5, leftoverGrams: 0 });
-    expect(resolveServings({ mode: 'vials', vials: 4 }, 3, 2)).toEqual({ servings: 8, vials: 4, leftoverGrams: 0 });
-    const w = resolveServings({ mode: 'weight', grams: 100 }, 3.275, 1);
+  it('servings and weight modes', () => {
+    expect(resolveServings({ mode: 'servings', servings: 10 }, 3)).toEqual({ servings: 10, leftoverGrams: 0 });
+    const w = resolveServings({ mode: 'weight', grams: 100 }, 3.275);
     expect(w.servings).toBe(30);
     expect(w.leftoverGrams).toBeCloseTo(100 - 30 * 3.275, 9);
   });
 
   it('weight mode with an exact multiple leaves nothing over', () => {
-    const w = resolveServings({ mode: 'weight', grams: 0.3 * 3 }, 0.3, 1);
+    const w = resolveServings({ mode: 'weight', grams: 0.3 * 3 }, 0.3);
     expect(w.servings).toBe(3);
     expect(w.leftoverGrams).toBeCloseTo(0, 9);
   });
@@ -102,21 +100,30 @@ describe('batch sizing', () => {
     for (const n of bad) {
       for (const size of [
         { mode: 'servings', servings: n },
-        { mode: 'vials', vials: n },
         { mode: 'weight', grams: n },
       ] as BatchSize[]) {
-        const r = resolveServings(size, 3, 1);
+        const r = resolveServings(size, 3);
         expect(r.servings).toBe(0);
-        expect(Number.isNaN(r.vials) || Number.isNaN(r.leftoverGrams)).toBe(false);
+        expect(Number.isNaN(r.leftoverGrams)).toBe(false);
         const batch = run('lemon', size);
         expect(batch.servings).toBe(0);
         expect(batch.costPerBatch).toBe(0);
         expect(batch.lines.every((l) => l.batchGrams === 0 && !l.lowPrecision)).toBe(true);
       }
     }
-    expect(resolveServings({ mode: 'weight', grams: 50 }, 0, 1)).toEqual({ servings: 0, vials: 0, leftoverGrams: 50 });
-    expect(resolveServings({ mode: 'servings', servings: 5 }, 3, 0).vials).toBe(5);
-    expect(resolveServings({ mode: 'bogus' } as unknown as BatchSize, 3, 1).servings).toBe(0);
+    expect(resolveServings({ mode: 'weight', grams: 50 }, 0)).toEqual({ servings: 0, leftoverGrams: 50 });
+    expect(resolveServings({ mode: 'bogus' } as unknown as BatchSize, 3).servings).toBe(0);
+  });
+
+  it('reads old batch sizes given in vials as servings', () => {
+    expect(normalizeBatchSize({ mode: 'vials', vials: 4 })).toEqual({ mode: 'servings', servings: 4 });
+    expect(normalizeBatchSize({ mode: 'vials', vials: 4 }, 3)).toEqual({ mode: 'servings', servings: 12 });
+    expect(normalizeBatchSize({ mode: 'vials', vials: 4 }, 0)).toEqual({ mode: 'servings', servings: 4 });
+    expect(normalizeBatchSize({ mode: 'servings', servings: 7 })).toEqual({ mode: 'servings', servings: 7 });
+    expect(normalizeBatchSize({ mode: 'weight', grams: 50 })).toEqual({ mode: 'weight', grams: 50 });
+    for (const bad of [undefined, null, 5, {}, { mode: 'vials' }, { mode: 'servings', servings: 'x' }, { mode: 'weight', grams: NaN }]) {
+      expect(normalizeBatchSize(bad)).toBeUndefined();
+    }
   });
 });
 
@@ -245,22 +252,16 @@ describe('properties', () => {
     );
   });
 
-  it('servings, vials and weight modes agree', () => {
+  it('servings and weight modes agree', () => {
     fc.assert(
-      fc.property(recipeArb, servingsArb, fc.integer({ min: 1, max: 6 }), (id, v, spv) => {
-        const n = v * spv;
+      fc.property(recipeArb, servingsArb, (id, n) => {
         const gps = gramsPerServing(recipe(id));
-        const s = { servingsPerVial: spv };
-        const a = run(id, { mode: 'servings', servings: n }, s);
-        const b = run(id, { mode: 'vials', vials: v }, s);
-        const c = run(id, { mode: 'weight', grams: n * gps }, s);
-        for (const other of [b, c]) {
-          expect(other.servings).toBe(a.servings);
-          expect(other.vials).toBeCloseTo(a.vials, 9);
-          expect(other.costPerBatch).toBeCloseTo(a.costPerBatch, 6);
-          expect(other.totalGrams).toBeCloseTo(a.totalGrams, 6);
-        }
-        expect(a.vials).toBeCloseTo(v, 9);
+        const a = run(id, { mode: 'servings', servings: n });
+        const c = run(id, { mode: 'weight', grams: n * gps });
+        expect(c.servings).toBe(a.servings);
+        expect(c.costPerBatch).toBeCloseTo(a.costPerBatch, 6);
+        expect(c.totalGrams).toBeCloseTo(a.totalGrams, 6);
+        expect(a.gramsPerServing).toBeCloseTo(gps, 9);
         expect(c.leftoverGrams).toBeCloseTo(0, 6);
       }),
     );

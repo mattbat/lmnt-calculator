@@ -4,7 +4,7 @@ Tracks every requirement in [REQUIREMENTS.md](../REQUIREMENTS.md). Update this f
 
 **Legend:** ✅ Done · 🟡 Partial · ⬜ Not started · ➖ Dropped · 📱 Needs checking on a real phone
 
-Last updated: 2026-11-07 (after the first phone test: read-only app with built-in recipes, per [docs/PLAN-phone-feedback.md](PLAN-phone-feedback.md); 154 unit tests, 19 e2e runs, `npm run check` green)
+Last updated: 2026-11-09 (vials dropped: one serving per vial; 167 unit tests, `npm run check` green)
 
 ## Platform
 
@@ -15,7 +15,7 @@ Last updated: 2026-11-07 (after the first phone test: read-only app with built-i
 | T3 | ✅ | Vite `base`, manifest `start_url`/`scope`, `navigateFallback` and Playwright `baseURL` all use `/lmnt-calculator/`; hash routes. |
 | T4 | ✅ | Service worker precaches the app; e2e launches offline (Chromium). |
 | T5 | ✅ | Dexie storage for the batch log and settings; `navigator.storage.persist()` is requested on launch. Recipes and ingredients are built into the code (`src/calc/defaults.ts`). |
-| T6 | ✅ | Versioned Dexie schema (`src/data/db.ts`): `version(2)` drops the recipes and ingredients tables, with a migration test from a real v1 database. |
+| T6 | ✅ | Versioned Dexie schema (`src/data/db.ts`): `version(2)` drops the recipes and ingredients tables; `version(3)` drops vials (vial batch sizes become servings). Migration tests for both. |
 | T7 | ✅ | Update banner is manual ("Update" / "Later") and hidden on `#/mix/...`. |
 | T8 | ✅ | `pwaUpdate`, `UpdateBanner`, `InstallHint`, `useWakeLock`, `share.ts`, backup, error banner and Diagnostics (in Settings) are all used. |
 | T9 | 🟡 📱 | Designed and e2e-tested at 402 and 412 pt wide. The app is a fixed-height frame with the tab bar as its bottom row, and main screens fit without scrolling (2026-11-08). On an installed iPhone app the height comes from the screen size (`src/viewport.ts`), because iOS reports every CSS height about 48pt short at launch; e2e simulates that. Titles start 16px below the status bar, outside the scroller, so they stay clear of iOS's haze under the clock (2026-11-09, as in next5); the update banner sits above the tab bar. Re-check on the iPhone. |
@@ -24,13 +24,14 @@ Last updated: 2026-11-07 (after the first phone test: read-only app with built-i
 
 | ID | Status | Notes |
 |----|--------|-------|
-| C1–C3 | ✅ | Servings / Vials / Weight segmented control (leftover shown for weight). Component tests for each. |
+| C1, C3 | ✅ | Servings / Weight segmented control (leftover shown for weight). Component tests for each. |
+| C2 | ➖ | Vials mode dropped 2026-11-09 (one serving per vial). Old saved vial sizes are read as servings. |
 | C4 | ✅ | Batch weight rounded to precision for display, plus per-serving weight; cost uses unrounded values. |
-| C5 | ✅ | Totals and savings are still calculated, but no longer shown on the calculator (2026-11-09); the summary line shows servings and vials. |
+| C5 | ✅ | Totals and savings are still calculated, but no longer shown on the calculator (2026-11-09); the summary line shows servings. |
 | C6 | ✅ | Nutrition-style Electrolytes label: serving size, then sodium, potassium and magnesium in mg with % daily value (2026-11-09). |
 | C7 | ✅ | "Low precision" chip on the calculator and in mixing mode. |
 | C8 | ✅ | Live recalculation; last batch size remembered per recipe (`lastBatchSize`). |
-| C9 | ✅ | All maths in `src/calc` (small helpers `vialPlan` and `pricePerGram` live there too). |
+| C9 | ✅ | All maths in `src/calc` (small helpers `fillPlan` and `pricePerGram` live there too). |
 
 ## Mixing mode (§7)
 
@@ -40,7 +41,7 @@ Last updated: 2026-11-07 (after the first phone test: read-only app with built-i
 | M2 | ✅ | Done → next; progress strip of 56 px chips, tap to jump back; Back button. |
 | M3 | ➖ | Dropped 2026-11-07 (actual weight and the 5% flag removed). Old entries that have actual weights still show them. |
 | M4 | ✅ | Base largest first, then flavor smallest first. "Weigh later" lets you postpone the current ingredient (swap with the next). |
-| M5 | ✅ | Mix step ("Combine and mix thoroughly. Break up any clumps."), then Fill step ("Fill V vials with X g each", partial last vial, leftover). |
+| M5 | ✅ | Mix step ("Combine and mix thoroughly. Break up any clumps."), then Fill step ("Fill N vials with X g each", one per serving, partial last vial for fractional servings, leftover). |
 | M6 | 📱 | Wake lock via `useWakeLock` (hint shown if not held); progress saved in localStorage (`lmnt-calculator.mix.<recipeId>`, with a session id) and resumed after reload (tested). Wake lock on a real iPhone Home Screen app needs a phone check. |
 | M7 | ✅ | Finish logs the batch then shows a notes field; Cancel asks to confirm. |
 | M8 | ✅ | Tips card shown once; also in Help. |
@@ -49,7 +50,7 @@ Last updated: 2026-11-07 (after the first phone test: read-only app with built-i
 
 | ID | Status | Notes |
 |----|--------|-------|
-| L1 | ✅ | Snapshot, servings, vials, fill, targets, cost and notes. Old entries may carry actual weights, which still display. |
+| L1 | ✅ | Snapshot, servings, targets, cost and notes; the entry screen shows grams per serving. Vial fields dropped 2026-11-09. Old entries may carry actual weights, which still display. |
 | L2 | ✅ | Newest first, filter by recipe, first line of notes. |
 | L3 | ✅ | Notes editable any time (button and on blur). |
 | L4 | ✅ | Simplified: Make again opens the calculator at that size. If the recipe no longer exists in the app, the entry still shows its snapshot and Make again is hidden. |
@@ -94,7 +95,7 @@ Recipes (cards with name, cost per serving and electrolytes only), Calculator (S
 | B1 | ✅ | Back up now (share sheet, or download). Format 2 holds batches and settings only. |
 | B2 | ✅ | Restore shows a summary; Merge, or Replace all with a second confirmation. Format 1 files still restore (recipes and ingredients in them are ignored). |
 | B3 | ✅ | Reminder banner on Recipes with **Back up now** and **Not now** (snoozes 30 days; unit and e2e tests). |
-| B4 | ✅ | Format version and migration hook (1 to 2 migration tested). |
+| B4 | ✅ | Format version and migration hook (1 to 2 and 2 to 3 migrations tested). |
 
 ## Non-functional (§15)
 
@@ -111,7 +112,7 @@ Recipes (cards with name, cost per serving and electrolytes only), Calculator (S
 |----|--------|-------|
 | Q-1 | ✅ | `npm run check` passes: lint, types, 154 unit/component tests, build, 19 Playwright runs. |
 | Q-2 | ✅ | Calc example and property tests. |
-| Q-3 | ✅ | Share URL, backup/restore (format 1 and 2), Dexie v1 to v2 migration, unit conversion, plus screen tests. |
+| Q-3 | ✅ | Share URL, backup/restore (formats 1 to 3), Dexie v1 to v2 and v2 to v3 migrations, unit conversion, plus screen tests. |
 | Q-4 | ✅ | e2e on iPhone WebKit and Android Chromium: batch to log to Make again (Start mixing on screen at load); share link to a fresh context; backup, clear, restore; Ingredients read-only; old `#r=` link; backup banner Not now; offline launch; layout (tab bar on the bottom edge, page never scrolls, main screens fit without scrolling). |
 | Q-5 | ✅ | Coverage about 98% lines overall, 100% for `src/calc`; thresholds enforced. |
 | Q-6 | 🟡 | CI workflow written (deploy only from `main`), not yet run on GitHub. |

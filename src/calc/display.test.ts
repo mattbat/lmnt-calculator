@@ -1,20 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { pricePerGram, vialPlan } from './display';
+import { fillPlan, pricePerGram } from './display';
 
-describe('vialPlan', () => {
-  it('rounds vials up and notes the partial last vial', () => {
-    const plan = vialPlan({ servings: 7, vials: 3.5, fillGramsPerVial: 10 }, 2);
-    expect(plan.totalVials).toBe(4);
-    expect(plan.partialServings).toBe(1);
+describe('fillPlan', () => {
+  it('fills one vial per serving and notes a partial last vial', () => {
+    const plan = fillPlan({ servings: 3.5, gramsPerServing: 10 });
+    expect(plan.vials).toBe(4);
+    expect(plan.partialServings).toBeCloseTo(0.5);
     expect(plan.partialGrams).toBeCloseTo(5);
   });
-  it('has no partial vial when every vial is full', () => {
-    expect(vialPlan({ servings: 30, vials: 30, fillGramsPerVial: 3 }, 1)).toEqual({
-      totalVials: 30,
-      partialServings: 0,
-      partialGrams: 0,
-    });
-    expect(vialPlan({ servings: 0, vials: 0, fillGramsPerVial: 0 }, 0).totalVials).toBe(0);
+  it('has no partial vial when servings are whole', () => {
+    expect(fillPlan({ servings: 30, gramsPerServing: 3 })).toEqual({ vials: 30, partialServings: 0, partialGrams: 0 });
+    expect(fillPlan({ servings: 0, gramsPerServing: 0 }).vials).toBe(0);
+    expect(fillPlan({ servings: NaN, gramsPerServing: 3 }).vials).toBe(0);
   });
 });
 

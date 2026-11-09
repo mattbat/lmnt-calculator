@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   calculateBatch,
   formatWeight,
+  fillPlan,
   mixingOrder,
-  vialPlan,
+  normalizeBatchSize,
 } from '../calc';
 import { Chip, Confirm, Footer, Loading, TopBar } from '../components/ui';
 import { createBatch, newId, updateBatchNotes, useIngredients, useRecipe, useSettings } from '../data/repo';
@@ -33,7 +34,7 @@ function tipsSeen(): boolean {
 function MixingBody({ recipe, ingredients, settings }: { recipe: Recipe; ingredients: Ingredient[]; settings: Settings }) {
   const [session, setSession] = useState<MixSession>(() => {
     const saved = loadMixSession(recipe.id);
-    const size = saved?.size ?? settings.lastBatchSize[recipe.id] ?? { mode: 'servings', servings: settings.defaultServings };
+    const size = saved?.size ?? normalizeBatchSize(settings.lastBatchSize[recipe.id]) ?? { mode: 'servings', servings: settings.defaultServings };
     const initial = calculateBatch(recipe, ingredients, size, settings);
     const fresh = mixingOrder(initial.lines).map((l) => l.ingredientId);
     const order = saved ? reconcileOrder(saved.order, fresh) : fresh;
@@ -62,7 +63,7 @@ function MixingBody({ recipe, ingredients, settings }: { recipe: Recipe; ingredi
     () => calculateBatch(recipe, ingredients, session.size, settings),
     [recipe, ingredients, session.size, settings],
   );
-  const plan = vialPlan(result, settings.servingsPerVial);
+  const plan = fillPlan(result);
   const lineById = new Map(result.lines.map((l) => [l.ingredientId, l]));
   const order = session.order.filter((id) => lineById.has(id));
   const unit = settings.weightUnit;
@@ -84,7 +85,7 @@ function MixingBody({ recipe, ingredients, settings }: { recipe: Recipe; ingredi
   const finish = async () => {
     try {
       const batch = await createBatch(
-        buildBatchInput({ recipe, result, settings, order }),
+        buildBatchInput({ recipe, result, order }),
       );
       clearMixSession(recipe.id);
       setFinishedId(batch.id);
@@ -231,13 +232,13 @@ function MixingBody({ recipe, ingredients, settings }: { recipe: Recipe; ingredi
         <section className="mix-step" aria-label="Fill">
           <h2 className="mix-name">Fill</h2>
           <p className="big-note">
-            Fill <strong className="num">{plan.totalVials}</strong> {plan.totalVials === 1 ? 'vial' : 'vials'} with{' '}
-            <strong className="num">{fmt(result.fillGramsPerVial)}</strong> each.
+            Fill <strong className="num">{plan.vials}</strong> {plan.vials === 1 ? 'vial' : 'vials'} with{' '}
+            <strong className="num">{fmt(result.gramsPerServing)}</strong> each.
           </p>
           {plan.partialServings > 0 && (
             <p className="big-note">
-              The last vial is a partial: {Number(plan.partialServings.toFixed(2))}{' '}
-              {plan.partialServings === 1 ? 'serving' : 'servings'}, <span className="num">{fmt(plan.partialGrams)}</span>.
+              The last vial is a partial: {Number(plan.partialServings.toFixed(2))} of a serving,{' '}
+              <span className="num">{fmt(plan.partialGrams)}</span>.
             </p>
           )}
           {result.leftoverGrams > 0 && (

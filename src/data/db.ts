@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie';
 import { DEFAULT_SETTINGS } from '../calc/defaults';
+import { dropVialsFromBatch, dropVialsFromSettings } from './legacy';
 import type { BatchLogEntry, Settings } from '../types';
 
 export const SETTINGS_ID = 'settings';
@@ -35,6 +36,18 @@ export class LmntDb extends Dexie {
             delete row.showTeaspoons;
           }),
       );
+    // Vials were dropped: one serving always fills one vial. Vial batch sizes
+    // become servings, and the vial fields go from settings and the log.
+    this.version(3)
+      .stores({})
+      .upgrade(async (tx) => {
+        await tx.table('settings').toCollection().modify((row: Record<string, unknown>) => {
+          dropVialsFromSettings(row);
+        });
+        await tx.table('batches').toCollection().modify((row: Record<string, unknown>) => {
+          dropVialsFromBatch(row);
+        });
+      });
     // Runs once, when the database is first created.
     this.on('populate', (tx) => {
       tx.table('settings').add({ ...DEFAULT_SETTINGS, id: SETTINGS_ID, updatedAt: Date.now() });

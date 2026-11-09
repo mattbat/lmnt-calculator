@@ -129,7 +129,6 @@ export const DEFAULT_RECIPES: Recipe[] = [
 export const DEFAULT_SETTINGS: Settings = {
   retailPricePerServing: 1.5,
   scalePrecision: 0.01,
-  servingsPerVial: 1,
   defaultServings: 30,
   weightUnit: 'g',
   theme: 'system',

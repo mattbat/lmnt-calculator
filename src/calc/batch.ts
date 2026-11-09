@@ -20,8 +20,8 @@ export interface BatchLine {
 
 export interface BatchResult {
   servings: number;
-  vials: number;
-  fillGramsPerVial: number;
+  /** Grams of mix in one serving (one vial). */
+  gramsPerServing: number;
   totalGrams: number;
   lines: BatchLine[];
   costPerBatch: number;
@@ -47,28 +47,38 @@ export function gramsPerServing(recipe: Pick<Recipe, 'lines'>): number {
 export function resolveServings(
   size: BatchSize,
   gramsPerServingValue: number,
-  servingsPerVial: number,
-): { servings: number; vials: number; leftoverGrams: number } {
-  const spv = safe(servingsPerVial) || 1;
+): { servings: number; leftoverGrams: number } {
   const gps = safe(gramsPerServingValue);
   switch (size.mode) {
-    case 'servings': {
-      const servings = safe(size.servings);
-      return { servings, vials: servings / spv, leftoverGrams: 0 };
-    }
-    case 'vials': {
-      const vials = safe(size.vials);
-      return { servings: vials * spv, vials, leftoverGrams: 0 };
-    }
+    case 'servings':
+      return { servings: safe(size.servings), leftoverGrams: 0 };
     case 'weight': {
       const grams = safe(size.grams);
-      if (gps === 0) return { servings: 0, vials: 0, leftoverGrams: grams };
+      if (gps === 0) return { servings: 0, leftoverGrams: grams };
       const servings = Math.floor(grams / gps + 1e-9);
-      return { servings, vials: servings / spv, leftoverGrams: Math.max(0, grams - servings * gps) };
+      return { servings, leftoverGrams: Math.max(0, grams - servings * gps) };
     }
     default:
-      return { servings: 0, vials: 0, leftoverGrams: 0 };
+      return { servings: 0, leftoverGrams: 0 };
   }
+}
+
+/**
+ * Reads a saved batch size, including old ones sized by vials (dropped
+ * 2026-11-09: a vial is always one serving). Returns undefined when unreadable.
+ */
+export function normalizeBatchSize(size: unknown, servingsPerVial = 1): BatchSize | undefined {
+  if (typeof size !== 'object' || size === null) return undefined;
+  const s = size as Record<string, unknown>;
+  const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
+  if (s.mode === 'servings' && num(s.servings) !== undefined) return { mode: 'servings', servings: s.servings as number };
+  if (s.mode === 'weight' && num(s.grams) !== undefined) return { mode: 'weight', grams: s.grams as number };
+  const vials = num(s.vials);
+  if (s.mode === 'vials' && vials !== undefined) {
+    const spv = num(servingsPerVial) !== undefined && servingsPerVial > 0 ? servingsPerVial : 1;
+    return { mode: 'servings', servings: vials * spv };
+  }
+  return undefined;
 }
 
 export function calculateBatch(
@@ -90,8 +100,7 @@ export function calculateBatch(
   }
 
   const gps = found.reduce((s, f) => s + f.gps, 0);
-  const spv = safe(settings.servingsPerVial) || 1;
-  const { servings, vials, leftoverGrams } = resolveServings(size, gps, spv);
+  const { servings, leftoverGrams } = resolveServings(size, gps);
   const precision = settings.scalePrecision;
 
   let costPerServing = 0;
@@ -122,8 +131,7 @@ export function calculateBatch(
 
   return {
     servings,
-    vials,
-    fillGramsPerVial: gps * spv,
+    gramsPerServing: gps,
     totalGrams: lines.reduce((s, l) => s + l.batchGrams, 0),
     lines,
     costPerBatch,

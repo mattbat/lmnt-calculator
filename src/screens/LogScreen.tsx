@@ -26,7 +26,7 @@ function ManualLogSheet({ onClose }: { onClose: () => void }) {
     if (!(n > 0)) return setFormError('Enter how many servings you made.');
     const result = calculateBatch(recipe, ingredients, { mode: 'servings', servings: n }, settings);
     await run(async () => {
-      const batch = await createBatch(buildBatchInput({ recipe, result, settings, notes: notes.trim() }));
+      const batch = await createBatch(buildBatchInput({ recipe, result, notes: notes.trim() }));
       onClose();
       navigate(paths.logEntry(batch.id));
     });

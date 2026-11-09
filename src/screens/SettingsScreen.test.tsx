@@ -37,9 +37,6 @@ const batchEntry = {
   recipeId: 'raw',
   recipeSnapshot: { name: 'Raw', color: '#64748b', lines: [] },
   servings: 1,
-  vials: 1,
-  servingsPerVial: 1,
-  fillGramsPerVial: 1,
   lines: [],
   totalCost: 0,
   notes: 'kept',
@@ -47,13 +44,12 @@ const batchEntry = {
 
 
 describe('Settings', () => {
-  it('changes units, precision, vials, default batch, retail price and theme', async () => {
+  it('changes units, precision, default batch, retail price and theme', async () => {
     const user = await open();
     await user.click(screen.getByRole('radio', { name: 'Ounces' }));
     await user.click(screen.getByRole('radio', { name: '0.1 g' }));
     await user.click(screen.getByRole('radio', { name: 'Dark' }));
     for (const [label, value] of [
-      ['Servings per vial', '2'],
       ['Default batch (servings)', '12'],
       ['Retail price per stick', '1.25'],
     ] as const) {
@@ -66,17 +62,15 @@ describe('Settings', () => {
         weightUnit: 'oz',
         scalePrecision: 0.1,
         theme: 'dark',
-        servingsPerVial: 2,
         defaultServings: 12,
         retailPricePerServing: 1.25,
       });
     });
   });
 
-  it('ignores a fractional servings-per-vial', async () => {
-    const user = await open();
-    await user.type(screen.getByLabelText('Servings per vial'), '.5');
-    expect((await getSettings()).servingsPerVial).toBe(1);
+  it('has no servings-per-vial setting: one serving fills one vial', async () => {
+    await open();
+    expect(screen.queryByLabelText('Servings per vial')).not.toBeInTheDocument();
   });
 
   it('explains scale precision with an info button (H-4)', async () => {
@@ -92,7 +86,7 @@ describe('Settings', () => {
     expect(await screen.findByText(/Backup file downloaded/)).toBeInTheDocument();
     expect(share.calls).toHaveLength(1);
     expect(share.calls[0]![0]).toMatch(/^lmnt-calculator-backup-\d{4}-\d{2}-\d{2}\.json$/);
-    expect(JSON.parse(share.calls[0]![1])).toMatchObject({ app: 'lmnt-calculator', format: 2 });
+    expect(JSON.parse(share.calls[0]![1])).toMatchObject({ app: 'lmnt-calculator', format: 3 });
     expect((await getSettings()).lastBackupAt).toBeGreaterThan(0);
     expect(await screen.findByText(/Last backup:/)).toBeInTheDocument();
     share.outcome = 'cancelled';
@@ -126,9 +120,6 @@ describe('Settings', () => {
       recipeId: 'raw',
       recipeSnapshot: { name: 'Raw', color: '#64748b', lines: [] },
       servings: 1,
-      vials: 1,
-      servingsPerVial: 1,
-      fillGramsPerVial: 1,
       lines: [],
       totalCost: 0,
       notes: 'new',
@@ -160,9 +151,6 @@ describe('Settings', () => {
       recipeId: 'raw',
       recipeSnapshot: { name: 'Raw', color: '#64748b', lines: [] },
       servings: 1,
-      vials: 1,
-      servingsPerVial: 1,
-      fillGramsPerVial: 1,
       lines: [],
       totalCost: 0,
       notes: '',

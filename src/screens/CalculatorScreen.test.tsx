@@ -1,10 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getSettings, updateSettings } from '../data/repo';
+import { getSettings, setLastBatchSize, updateSettings } from '../data/repo';
 import { saveMixSession } from '../mixSession';
 import { freshDb } from '../test/db';
 import { CalculatorScreen } from './CalculatorScreen';
+import type { BatchSize } from '../types';
 
 beforeEach(async () => {
   localStorage.clear();
@@ -18,6 +19,8 @@ async function open(id = 'watermelon') {
   render(<CalculatorScreen id={id} />);
   await screen.findByText('Weigh out');
 }
+
+const summary = () => document.querySelector('.summary')!;
 
 describe('Calculator screen', () => {
   it('scales a 30-serving Watermelon batch (C1, C4)', async () => {
@@ -43,17 +46,20 @@ describe('Calculator screen', () => {
     );
   });
 
-  it('sizes by vials (C2), converting with servings per vial', async () => {
-    const user = userEvent.setup();
-    await updateSettings({ servingsPerVial: 2 });
+  it('sizes by servings or weight only: no vials option', async () => {
     await open();
-    await user.click(screen.getByRole('radio', { name: 'Vials' }));
-    const input = screen.getByLabelText('Number of vials');
-    expect(input).toHaveValue('15');
-    await user.clear(input);
-    await user.type(input, '5');
-    expect(amount('salt')).toHaveTextContent('25.00 g');
-    expect(screen.getByText(/servings ·/)).toHaveTextContent('10 servings · 5 vials');
+    expect(screen.getAllByRole('radio', { name: /Servings|Vials|Weight/ }).map((r) => r.textContent)).toEqual([
+      'Servings',
+      'Weight',
+    ]);
+    expect(summary()).toHaveTextContent('30 servings · one per 16–32 oz water');
+    expect(summary()).not.toHaveTextContent('vial');
+  });
+
+  it('reads an old batch size saved in vials as servings', async () => {
+    await setLastBatchSize('watermelon', { mode: 'vials', vials: 10 } as unknown as BatchSize);
+    await open();
+    expect(screen.getByLabelText('Number of servings')).toHaveValue('10');
   });
 
   it('sizes by total weight (C3) and shows the leftover', async () => {
@@ -64,7 +70,7 @@ describe('Calculator screen', () => {
     await user.clear(input);
     await user.type(input, '100');
     // 100 g / 5.295 g per serving = 18 servings, 4.69 g left over
-    expect(screen.getByText(/servings ·/)).toHaveTextContent('18 servings');
+    expect(summary()).toHaveTextContent('18 servings');
     expect(screen.getByText(/leftover/)).toHaveTextContent('4.69 g');
     expect(amount('salt')).toHaveTextContent('45.00 g');
   });
@@ -119,16 +125,6 @@ describe('Calculator screen', () => {
     expect(before(start, weigh)).toBe(true);
     expect(before(share, weigh)).toBe(true);
     expect(before(weigh, summary)).toBe(true);
-  });
-
-  it('rounds vials up', async () => {
-    const user = userEvent.setup();
-    await updateSettings({ servingsPerVial: 4 });
-    await open();
-    const input = screen.getByLabelText('Number of servings');
-    await user.clear(input);
-    await user.type(input, '10');
-    expect(screen.getByText(/servings ·/)).toHaveTextContent('3 vials');
   });
 
   it('starts mixing and shares a link to the recipe page', async () => {

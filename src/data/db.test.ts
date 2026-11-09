@@ -36,6 +36,7 @@ describe('Dexie version 2 migration', () => {
       disclaimerAcceptedAt: 5,
       lastBackupAt: 6,
       lastBatchSize: { raw: { mode: 'servings', servings: 12 } },
+      servingsPerVial: 1,
       updatedAt: 7,
     };
     await v1.table('ingredients').bulkAdd(DEFAULT_INGREDIENTS);
@@ -50,12 +51,56 @@ describe('Dexie version 2 migration', () => {
       expect(db.tables.map((t) => t.name).sort()).toEqual(['batches', 'settings']);
       expect(db.backendDB().objectStoreNames.contains('recipes')).toBe(false);
       expect(db.backendDB().objectStoreNames.contains('ingredients')).toBe(false);
-      expect(await db.batches.toArray()).toEqual([batch]);
-      const { showTeaspoons: _removed, ...expected } = settings;
-      void _removed;
+      const { vials: _v, servingsPerVial: _spv, fillGramsPerVial: _fill, ...keptBatch } = batch;
+      void [_v, _spv, _fill];
+      expect(await db.batches.toArray()).toEqual([keptBatch]);
+      const { showTeaspoons: _removed, servingsPerVial: _spvSetting, ...expected } = settings;
+      void [_removed, _spvSetting];
       const row = await db.settings.get(SETTINGS_ID);
       expect(row).toEqual(expected);
       expect(row).not.toHaveProperty('showTeaspoons');
+    } finally {
+      db.close();
+      await Dexie.delete(name);
+    }
+  });
+
+  it('version 3 turns vial batch sizes into servings and drops the vial fields', async () => {
+    const name = `lmnt-vials-${Date.now()}`;
+    const v2 = new Dexie(name);
+    v2.version(2).stores({ batches: 'id, madeAt, recipeId', settings: 'id' });
+    await v2.table('settings').add({
+      ...DEFAULT_SETTINGS,
+      id: SETTINGS_ID,
+      servingsPerVial: 3,
+      lastBatchSize: { raw: { mode: 'vials', vials: 4 }, lemon: { mode: 'servings', servings: 9 }, junk: 'x' },
+      updatedAt: 7,
+    });
+    await v2.table('batches').add({
+      id: 'b1',
+      madeAt: 1,
+      recipeId: 'raw',
+      recipeSnapshot: { name: 'Raw', color: '#fff', lines: [] },
+      servings: 12,
+      vials: 4,
+      servingsPerVial: 3,
+      fillGramsPerVial: 9.8,
+      lines: [],
+      totalCost: 1,
+      notes: '',
+      updatedAt: 2,
+    });
+    v2.close();
+
+    const db = new LmntDb(name);
+    try {
+      await db.open();
+      const row = await db.settings.get(SETTINGS_ID);
+      expect(row).not.toHaveProperty('servingsPerVial');
+      expect(row!.lastBatchSize).toEqual({ raw: { mode: 'servings', servings: 12 }, lemon: { mode: 'servings', servings: 9 } });
+      const b = await db.batches.get('b1');
+      expect(b).toMatchObject({ servings: 12 });
+      for (const key of ['vials', 'servingsPerVial', 'fillGramsPerVial']) expect(b).not.toHaveProperty(key);
     } finally {
       db.close();
       await Dexie.delete(name);
