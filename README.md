@@ -28,8 +28,8 @@ Installing is optional, but an installed app keeps its own storage, separate fro
 ### Quick start: make a batch
 
 1. On **Recipes**, tap a recipe (Raw, Lemon and Watermelon come built in).
-2. Choose the batch size: **Servings**, **Vials**, or **Weight** of mix. Everything updates instantly.
-3. **Start mixing** is right under the batch size. Below it, the **Weigh out** list shows how many grams of each ingredient to measure (switch between grams and ounces there), and a **Summary** card shows the batch weight, the vials, the cost, your savings and the electrolytes.
+2. Choose the batch size: **Servings** (one serving fills one vial) or **Weight** of mix. Everything updates instantly.
+3. **Start mixing** is right under the batch size. Below it, the **Weigh out** list shows how many grams of each ingredient to measure (switch between grams and ounces there), and an **Electrolytes** label shows the sodium, potassium and magnesium per serving.
 4. Tap **Start mixing**. For each ingredient: tare the scale, weigh to the target, tap **Done → next**. The screen stays on, and if the phone locks you resume on the same step.
 5. After the last ingredient, mix well (break up any clumps), fill the vials, and tap **Finish**. The batch goes to the **Log**, where you can add notes ("a bit sour; try 0.5 g less malic acid").
 6. Next time, open the entry and tap **Make again**.
@@ -100,16 +100,16 @@ npm run check      # everything below, in order, stopping at the first failure
 
 ### Backup format
 
-One JSON file: `{ app: 'lmnt-calculator', format: 2, exportedAt, batches, settings }`. `format` is the layout version; older files are upgraded through `MIGRATIONS` in `src/data/backup.ts` on restore. A format 1 file (which also held recipes and ingredients) still restores: its batches and settings are kept and the rest is ignored. Merge matches by id and keeps the newer `updatedAt`. `settings.backupReminderSnoozedUntil` holds the "Not now" snooze.
+One JSON file: `{ app: 'lmnt-calculator', format: 3, exportedAt, batches, settings }`. `format` is the layout version; older files are upgraded through `MIGRATIONS` in `src/data/backup.ts` on restore. A format 1 file (which also held recipes and ingredients) still restores: its batches and settings are kept and the rest is ignored. A format 2 file (from when batches could be sized by vials) restores with vial sizes turned into servings and the vial fields dropped. Merge matches by id and keeps the newer `updatedAt`. `settings.backupReminderSnoozedUntil` holds the "Not now" snooze.
 
 ### Calculation formulas
 
 All in `src/calc/batch.ts` (grams, US dollars):
 
 - Grams per serving `g = Σ gramsPerServing(line)`.
-- Servings `N`: by servings, `N`; by vials `V`, `N = V × servingsPerVial`; by total weight `W`, `N = floor(W / g)` with leftover `W − N·g`.
+- Servings `N`: by servings, `N`; by total weight `W`, `N = floor(W / g)` with leftover `W − N·g`.
 - Line batch weight `= gramsPerServing × N`, displayed rounded to the scale precision (display only; totals and cost use the unrounded value). A line is flagged low precision when its batch weight is below `10 × precision`.
-- Fill per vial `= g × servingsPerVial`. Vials shown are `ceil(N / servingsPerVial)`, with the last, partial vial noted.
+- One serving fills one vial: fill each vial with `g`. Vials shown are `ceil(N)`, with a partial last vial noted when `N` is fractional.
 - Cost per gram `= packagePrice / packageGrams`; cost per serving `= Σ gramsPerServing × costPerGram`; cost per batch `= cost per serving × N`.
 - Savings per serving `= retailPrice − cost per serving`; per batch `= savings per serving × N`.
 - Minerals (mg per serving) `= Σ gramsPerServing × fraction × 1000`, with percent of daily value against 2,300 mg sodium and 4,700 mg potassium.

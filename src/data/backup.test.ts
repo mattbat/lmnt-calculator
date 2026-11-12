@@ -28,9 +28,6 @@ const batch: Omit<BatchLogEntry, 'id' | 'updatedAt'> = {
   recipeId: 'raw',
   recipeSnapshot: { name: 'Raw', color: '#fff', lines: [{ ingredientId: 'salt', gramsPerServing: 2.5 }] },
   servings: 30,
-  vials: 30,
-  servingsPerVial: 1,
-  fillGramsPerVial: 3.275,
   lines: [{ ingredientId: 'salt', name: 'Salt', gramsPerServing: 2.5, targetGrams: 75, actualGrams: 75.1 }],
   totalCost: 3,
   notes: 'ok',
@@ -111,17 +108,17 @@ describe('rejecting bad files (B2, B4)', () => {
 
   it('migrates old formats step by step, or refuses when no step exists (B4)', async () => {
     const text = JSON.stringify(await createBackup());
-    // Pretend the app is at format 3 and a step for format 2 exists.
+    // Pretend the app is at format 4 and a step for format 3 exists.
     const step = vi.fn((raw: Record<string, unknown>) => ({ ...raw, extra: 1 }));
-    MIGRATIONS[2] = step;
+    MIGRATIONS[3] = step;
     try {
-      const result = parseBackup(text, 3);
+      const result = parseBackup(text, 4);
       expect(step).toHaveBeenCalledOnce();
-      expect(result.ok && result.backup.format).toBe(3);
+      expect(result.ok && result.backup.format).toBe(4);
     } finally {
-      delete MIGRATIONS[2];
+      delete MIGRATIONS[3];
     }
-    const refused = parseBackup(text, 3);
+    const refused = parseBackup(text, 4);
     expect(!refused.ok && refused.error).toMatch(/too old/);
   });
 
@@ -138,7 +135,7 @@ describe('rejecting bad files (B2, B4)', () => {
     const parsed = parseBackup(JSON.stringify(v1));
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;
-    expect(parsed.backup.format).toBe(2);
+    expect(parsed.backup.format).toBe(3);
     expect(parsed.backup).not.toHaveProperty('recipes');
     expect(parsed.backup).not.toHaveProperty('ingredients');
     expect(parsed.backup.settings).not.toHaveProperty('showTeaspoons');
@@ -150,6 +147,34 @@ describe('rejecting bad files (B2, B4)', () => {
     expect(await db.batches.count()).toBe(1);
     expect((await getSettings()).weightUnit).toBe(current.settings.weightUnit);
     expect(db.tables.map((t) => t.name).sort()).toEqual(['batches', 'settings']);
+  });
+});
+
+describe('format 2 backups (with vials)', () => {
+  it('turns vial batch sizes into servings and drops the vial fields', async () => {
+    await createBatch(batch);
+    const current = await createBackup(7);
+    const v2 = {
+      ...current,
+      format: 2,
+      settings: {
+        ...current.settings,
+        servingsPerVial: 2,
+        lastBatchSize: { raw: { mode: 'vials', vials: 5 }, lemon: { mode: 'weight', grams: 80 }, bad: { mode: 'vials' } },
+      },
+      batches: current.batches.map((b) => ({ ...b, vials: 15, servingsPerVial: 2, fillGramsPerVial: 6.55 })),
+    };
+    const parsed = parseBackup(JSON.stringify(v2));
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.backup.format).toBe(3);
+    expect(parsed.backup.settings).not.toHaveProperty('servingsPerVial');
+    expect(parsed.backup.settings.lastBatchSize).toEqual({
+      raw: { mode: 'servings', servings: 10 },
+      lemon: { mode: 'weight', grams: 80 },
+    });
+    for (const key of ['vials', 'servingsPerVial', 'fillGramsPerVial']) expect(parsed.backup.batches[0]).not.toHaveProperty(key);
+    expect(parsed.backup.batches[0]).toMatchObject({ servings: batch.servings, notes: batch.notes });
   });
 });
 

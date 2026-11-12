@@ -48,12 +48,8 @@ function EntryBody({ batch, recipes, settings }: { batch: BatchLogEntry; recipes
           <dd className="num">{Number(batch.servings.toFixed(2))}</dd>
         </div>
         <div>
-          <dt>Vials</dt>
-          <dd className="num">{batch.vials}</dd>
-        </div>
-        <div>
-          <dt>Fill per vial</dt>
-          <dd className="num">{fmt(batch.fillGramsPerVial)}</dd>
+          <dt>Per serving</dt>
+          <dd className="num">{fmt(batch.lines.reduce((sum, l) => sum + l.gramsPerServing, 0))}</dd>
         </div>
         <div>
           <dt>Cost</dt>

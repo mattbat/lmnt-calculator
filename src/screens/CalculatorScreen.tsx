@@ -4,9 +4,9 @@ import {
   formatWeight,
   gramsPerServing,
   gramsToOunces,
+  normalizeBatchSize,
   ouncesToGrams,
   roundToPrecision,
-  vialPlan,
 } from '../calc';
 import { Chip, Footer, Loading, NumField, Section, Segmented, TopBar } from '../components/ui';
 import { recipePageUrl, shareLink } from '../data/share';
@@ -24,11 +24,10 @@ const NUTRI_ROWS: [Mineral, string][] = [
   ['magnesium', 'Magnesium'],
 ];
 
-const MODE_LABEL: Record<Mode, string> = { servings: 'Servings', vials: 'Vials', weight: 'Weight' };
+const MODE_LABEL: Record<Mode, string> = { servings: 'Servings', weight: 'Weight' };
 
 function sizeValue(size: BatchSize, unit: Settings['weightUnit']): number {
   if (size.mode === 'servings') return size.servings;
-  if (size.mode === 'vials') return size.vials;
   return unit === 'oz' ? Number(gramsToOunces(size.grams).toFixed(3)) : size.grams;
 }
 
@@ -42,7 +41,7 @@ function CalculatorBody({
   settings: Settings;
 }) {
   const [size, setSize] = useState<BatchSize>(
-    () => settings.lastBatchSize[recipe.id] ?? { mode: 'servings', servings: settings.defaultServings },
+    () => normalizeBatchSize(settings.lastBatchSize[recipe.id]) ?? { mode: 'servings', servings: settings.defaultServings },
   );
   const [shareMessage, setShareMessage] = useState('');
   const unit = settings.weightUnit;
@@ -52,7 +51,6 @@ function CalculatorBody({
     () => calculateBatch(recipe, ingredients, size, settings),
     [recipe, ingredients, size, settings],
   );
-  const plan = vialPlan(result, settings.servingsPerVial);
 
   const change = (next: BatchSize) => {
     setSize(next);
@@ -62,14 +60,12 @@ function CalculatorBody({
   const switchMode = (mode: Mode) => {
     if (mode === size.mode) return;
     if (mode === 'servings') change({ mode, servings: Math.max(1, Math.floor(result.servings)) });
-    else if (mode === 'vials') change({ mode, vials: Math.max(1, plan.totalVials) });
     else change({ mode, grams: roundToPrecision(result.totalGrams, precision) || 100 });
   };
 
   const setAmount = (value: number | undefined) => {
     if (value === undefined || value <= 0) return;
     if (size.mode === 'servings') change({ mode: 'servings', servings: value });
-    else if (size.mode === 'vials') change({ mode: 'vials', vials: value });
     else change({ mode: 'weight', grams: unit === 'oz' ? ouncesToGrams(value) : value });
   };
 
@@ -99,16 +95,10 @@ function CalculatorBody({
             label="Batch size by"
             value={size.mode}
             onChange={switchMode}
-            options={(['servings', 'vials', 'weight'] as Mode[]).map((m) => ({ value: m, label: MODE_LABEL[m] }))}
+            options={(['servings', 'weight'] as Mode[]).map((m) => ({ value: m, label: MODE_LABEL[m] }))}
           />
           <NumField
-            label={
-              size.mode === 'servings'
-                ? 'Number of servings'
-                : size.mode === 'vials'
-                  ? 'Number of vials'
-                  : `Total weight of mix (${unit})`
-            }
+            label={size.mode === 'servings' ? 'Number of servings' : `Total weight of mix (${unit})`}
             hideLabel
             value={sizeValue(size, unit)}
             onValue={setAmount}
@@ -118,8 +108,7 @@ function CalculatorBody({
           />
         </div>
         <p className="summary" aria-live="polite">
-          <strong className="num">{Number(result.servings.toFixed(2))}</strong> servings ·{' '}
-          <strong className="num">{plan.totalVials}</strong> {plan.totalVials === 1 ? 'vial' : 'vials'}
+          <strong className="num">{Number(result.servings.toFixed(2))}</strong> {result.servings === 1 ? 'serving' : 'servings'}
           {size.mode === 'weight' && result.leftoverGrams > 0 && (
             <>
               {' '}

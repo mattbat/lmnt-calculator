@@ -28,9 +28,6 @@ const entry = (over: Partial<BatchInput> = {}): BatchInput => ({
     ],
   },
   servings: 30,
-  vials: 30,
-  servingsPerVial: 1,
-  fillGramsPerVial: 2.62,
   lines: [
     { ingredientId: 'salt', name: 'Redmond Real Salt', gramsPerServing: 2.5, targetGrams: 75, actualGrams: 80 },
     { ingredientId: 'stevia', name: 'Stevia', gramsPerServing: 0.12, targetGrams: 3.6 },

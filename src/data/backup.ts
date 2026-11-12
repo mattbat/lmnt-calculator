@@ -1,9 +1,10 @@
 import { db, SETTINGS_ID, type SettingsRow } from './db';
+import { dropVialsFromBatch, dropVialsFromSettings } from './legacy';
 import { shareFile, type ShareOutcome } from './share';
 import type { BatchLogEntry, Settings } from '../types';
 
 /** The backup file layout version (B4). Bump it, and add a step to `MIGRATIONS`, when the layout changes. */
-export const BACKUP_FORMAT = 2;
+export const BACKUP_FORMAT = 3;
 export const APP_ID = 'lmnt-calculator';
 const REMINDER_DAYS = 60;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -31,6 +32,13 @@ export const MIGRATIONS: Record<number, (raw: Record<string, unknown>) => Record
       void _tsp;
       rest.settings = settings;
     }
+    return rest;
+  },
+  // Format 3 drops vials: one serving always fills one vial.
+  2: (raw) => {
+    const rest = { ...raw };
+    if (isObj(rest.settings)) rest.settings = dropVialsFromSettings({ ...rest.settings });
+    if (Array.isArray(rest.batches)) rest.batches = rest.batches.map((b) => (isObj(b) ? dropVialsFromBatch({ ...b }) : b));
     return rest;
   },
 };
@@ -73,8 +81,7 @@ function checkLines(lines: unknown, what: string): void {
 function checkBatch(v: unknown, i: number): void {
   const what = `log entry ${i + 1}`;
   if (!isObj(v) || !isStr(v.id) || !isNum(v.madeAt) || !isStr(v.recipeId) || !isNum(v.updatedAt)) fail(what);
-  if (!isNum(v.servings) || !isNum(v.vials) || !isNum(v.servingsPerVial) || !isNum(v.fillGramsPerVial)) fail(what);
-  if (!isNum(v.totalCost) || !isStr(v.notes) || !optNum(v.rating)) fail(what);
+  if (!isNum(v.servings) || !isNum(v.totalCost) || !isStr(v.notes) || !optNum(v.rating)) fail(what);
   if (!isObj(v.recipeSnapshot) || !isStr(v.recipeSnapshot.name) || !isStr(v.recipeSnapshot.color)) fail(what);
   checkLines(v.recipeSnapshot.lines, what);
   if (!Array.isArray(v.lines)) fail(what);
@@ -87,7 +94,7 @@ function checkBatch(v: unknown, i: number): void {
 
 function checkSettings(v: unknown): void {
   if (!isObj(v) || v.id !== SETTINGS_ID || !isNum(v.updatedAt)) fail('settings');
-  const numbers = ['retailPricePerServing', 'servingsPerVial', 'defaultServings'];
+  const numbers = ['retailPricePerServing', 'defaultServings'];
   if (numbers.some((k) => !isNum(v[k])) || !optNum(v.disclaimerAcceptedAt) || !optNum(v.lastBackupAt) || !optNum(v.backupReminderSnoozedUntil)) fail('settings');
   if (![0.01, 0.1, 1].includes(v.scalePrecision as number)) fail('settings');
   if (v.weightUnit !== 'g' && v.weightUnit !== 'oz') fail('settings');

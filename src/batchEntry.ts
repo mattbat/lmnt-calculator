@@ -1,6 +1,6 @@
-import { vialPlan, type BatchResult } from './calc';
+import type { BatchResult } from './calc';
 import type { BatchInput } from './data/repo';
-import type { Recipe, Settings } from './types';
+import type { Recipe } from './types';
 
 /**
  * Turns a calculated batch into a log entry (L1), with a snapshot of the
@@ -10,12 +10,11 @@ import type { Recipe, Settings } from './types';
 export function buildBatchInput(args: {
   recipe: Pick<Recipe, 'id' | 'name' | 'color' | 'lines'>;
   result: BatchResult;
-  settings: Pick<Settings, 'servingsPerVial'>;
   order?: string[];
   notes?: string;
   madeAt?: number;
 }): BatchInput {
-  const { recipe, result, settings } = args;
+  const { recipe, result } = args;
   const byId = new Map(result.lines.map((l) => [l.ingredientId, l]));
   const ids = (args.order ?? result.lines.map((l) => l.ingredientId)).filter((id) => byId.has(id));
   return {
@@ -23,9 +22,6 @@ export function buildBatchInput(args: {
     recipeId: recipe.id,
     recipeSnapshot: { name: recipe.name, color: recipe.color, lines: recipe.lines.map((l) => ({ ...l })) },
     servings: result.servings,
-    vials: vialPlan(result, settings.servingsPerVial).totalVials,
-    servingsPerVial: settings.servingsPerVial,
-    fillGramsPerVial: result.fillGramsPerVial,
     lines: ids.map((id) => {
       const line = byId.get(id)!;
       return {

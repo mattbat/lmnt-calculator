@@ -41,10 +41,9 @@ export interface Recipe {
   updatedAt: number;
 }
 
-/** How the user sized the batch (C1–C3). */
+/** How the user sized the batch (C1, C3). One serving fills one vial. */
 export type BatchSize =
   | { mode: 'servings'; servings: number }
-  | { mode: 'vials'; vials: number }
   | { mode: 'weight'; grams: number };
 
 export type WeightUnit = 'g' | 'oz';
@@ -55,7 +54,6 @@ export interface Settings {
   /** Retail price per stick for the savings comparison (§5.3). */
   retailPricePerServing: number;
   scalePrecision: ScalePrecision;
-  servingsPerVial: number;
   defaultServings: number;
   weightUnit: WeightUnit;
   theme: ThemeSetting;
@@ -83,10 +81,8 @@ export interface BatchLogEntry {
   recipeId: string;
   /** Snapshot of the recipe as it was when the batch was made (§4). */
   recipeSnapshot: { name: string; color: string; lines: RecipeLine[] };
+  /** Servings made; one serving fills one vial. */
   servings: number;
-  vials: number;
-  servingsPerVial: number;
-  fillGramsPerVial: number;
   lines: LoggedLine[];
   totalCost: number;
   notes: string;

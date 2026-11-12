@@ -21,6 +21,12 @@ describe('mix session storage', () => {
     clearMixSession('lemon');
     expect(hasMixSession('lemon')).toBe(false);
   });
+  it('reads a session sized by vials (from before vials were dropped) as servings', () => {
+    localStorage.setItem('lmnt-calculator.mix.lemon', JSON.stringify({ ...session, size: { mode: 'vials', vials: 12 } }));
+    expect(loadMixSession('lemon')?.size).toEqual({ mode: 'servings', servings: 12 });
+    localStorage.setItem('lmnt-calculator.mix.lemon', JSON.stringify({ ...session, size: { mode: 'nope' } }));
+    expect(loadMixSession('lemon')).toBeUndefined();
+  });
   it('ignores damaged data and unavailable storage', () => {
     localStorage.setItem('lmnt-calculator.mix.lemon', 'nope');
     expect(loadMixSession('lemon')).toBeUndefined();

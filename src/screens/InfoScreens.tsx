@@ -88,7 +88,7 @@ const TOPICS: { title: string; body: string[] }[] = [
   {
     title: 'Making a batch',
     body: [
-      'Open a recipe from the Recipes tab and choose how to size your batch: by servings, by vials, or by the total weight of mix you want.',
+      'Open a recipe from the Recipes tab and choose how to size your batch: by servings (one serving fills one vial) or by the total weight of mix you want.',
       'Tap Start mixing to be walked through it, or use the Weigh out list to see how many grams of each ingredient to measure.',
       'The recipes and ingredient prices are built into the app and change only when the app updates.',
       'Each serving is meant for 16–32 oz (about 0.5–1 L) of water.',

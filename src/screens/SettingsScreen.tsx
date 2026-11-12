@@ -169,13 +169,6 @@ function SettingsBody({ settings }: { settings: Settings }) {
         </div>
         <NumField
           inline
-          label="Servings per vial"
-          value={settings.servingsPerVial}
-          onValue={(v) => v !== undefined && Number.isInteger(v) && v >= 1 && void updateSettings({ servingsPerVial: v })}
-          min={1}
-        />
-        <NumField
-          inline
           label="Default batch (servings)"
           value={settings.defaultServings}
           onValue={(v) => v !== undefined && v > 0 && void updateSettings({ defaultServings: v })}

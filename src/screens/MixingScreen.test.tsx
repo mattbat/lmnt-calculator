@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '../data/db';
-import { setLastBatchSize, updateSettings } from '../data/repo';
+import { setLastBatchSize } from '../data/repo';
 import { loadMixSession } from '../mixSession';
 import { freshDb } from '../test/db';
 import { MixingScreen } from './MixingScreen';
@@ -114,7 +114,8 @@ describe('Mixing mode', () => {
     await user.click(screen.getByRole('button', { name: 'Finish' }));
     expect(await screen.findByRole('heading', { name: 'Batch logged' })).toBeInTheDocument();
     const [batch] = await db.batches.toArray();
-    expect(batch).toMatchObject({ recipeId: 'watermelon', servings: 30, vials: 30, notes: '' });
+    expect(batch).toMatchObject({ recipeId: 'watermelon', servings: 30, notes: '' });
+    expect(batch).not.toHaveProperty('vials');
     expect(batch!.lines[0]).toMatchObject({ ingredientId: 'salt', targetGrams: 75 });
     expect(batch!.lines[0]).not.toHaveProperty('actualGrams');
     expect(batch!.lines).toHaveLength(6);
@@ -127,13 +128,12 @@ describe('Mixing mode', () => {
     expect(window.location.hash).toBe('#/log');
   });
 
-  it('notes the partial last vial and leftover when filling', async () => {
-    await updateSettings({ servingsPerVial: 4 });
-    await setLastBatchSize('watermelon', { mode: 'servings', servings: 10 });
+  it('notes the partial last vial for a fractional batch', async () => {
+    await setLastBatchSize('watermelon', { mode: 'servings', servings: 2.5 });
     const { user } = await start();
     for (let i = 0; i < 7; i++) await next(user);
-    expect(screen.getByText(/Fill/, { selector: 'p' })).toHaveTextContent('Fill 3 vials with 21.18 g each');
-    expect(screen.getByText(/last vial is a partial: 2 servings/)).toBeInTheDocument();
+    expect(screen.getByText(/Fill/, { selector: 'p' })).toHaveTextContent('Fill 3 vials with 5.30 g each');
+    expect(screen.getByText(/last vial is a partial: 0.5 of a serving/)).toHaveTextContent('2.65 g');
   });
 
   it('discards the batch after confirming (M7)', async () => {

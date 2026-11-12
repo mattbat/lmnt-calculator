@@ -1,3 +1,4 @@
+import { normalizeBatchSize } from './calc/batch';
 import type { BatchSize } from './types';
 
 /**
@@ -24,7 +25,9 @@ export function loadMixSession(recipeId: string): MixSession | undefined {
     if (!raw) return undefined;
     const s = JSON.parse(raw) as MixSession;
     if (s.recipeId !== recipeId || !Array.isArray(s.order) || typeof s.step !== 'number') return undefined;
-    return s;
+    // Sessions saved before vials were dropped may be sized by vials (always one serving each).
+    const size = normalizeBatchSize(s.size);
+    return size ? { ...s, size } : undefined;
   } catch {
     return undefined;
   }
